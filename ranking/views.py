@@ -3,7 +3,6 @@ from django.core.paginator import Paginator
 
 from .models import YearScore
 from predictions.models import GrandPrix
-from ranking.models import CustomUser
 
 from datetime import datetime
 from itertools import chain

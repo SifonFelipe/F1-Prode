@@ -3,8 +3,6 @@ from django.http import JsonResponse
 from datetime import datetime, timezone, timedelta
 
 import json
-import requests
-import fastf1
 
 from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result
 
