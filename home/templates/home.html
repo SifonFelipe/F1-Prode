@@ -1,0 +1,140 @@
+{% extends 'main.html' %} {% block content %}
+
+{% load home_filters %}
+
+<main class="container">
+    <section class="hero">
+        <h1>Pronósticos F1</h1>
+        <p>¡Demuestra tus conocimientos de Fórmula 1 y compite contra tus amigos!</p>
+    </section>
+    
+    <section class="next-race">
+        <h2>Próxima Carrera: {{next_gp.name}}</h2>
+        <div class="race-info">
+            <div class="race-details">
+                <p><strong>Fecha:</strong> {{next_gp.date}}</p>
+            </div>
+            <div class="circuit-image">
+                <img src="/api/placeholder/500/300" alt="Circuito de Barcelona-Catalunya">
+            </div>
+        </div>
+    </section>
+    
+    <section class="prode-section">
+        <h2>¡Haz tu pronóstico para el {{ next_gp.name }}!</h2>
+        <p>¿Crees saber quién ganará la próxima carrera? ¿Quién hará la pole position? ¿Quiénes subirán al podio? Demuestra tus conocimientos y compite con otros fans de la F1 haciendo tu pronóstico.</p>
+        <div class="countdown">
+            Tiempo restante para enviar tu pronóstico: <span id="countdown">...</span>
+        </div>
+        <a href="pronostico.html" class="action-btn">Hacer mi pronóstico</a>
+    </section>
+    
+    <section class="standings">
+        <h2>Clasificación de Jugadores</h2>
+        <table class="standings-table">
+            <thead>
+                <tr>
+                    <th>Pos</th>
+                    <th>Jugador</th>
+                    <th>Puntos</th>
+                    <th>Participaciones</th>
+                    <th>Último Resultado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for yearscore, last_result in ranking.items %}
+                <tr>
+                    <td>{{ yearscore.position }}</td>
+                    <td>{{ yearscore.user.username }}</td>
+                    <td>{{ yearscore.points|clean_float }}</td>
+                    <td>{{ yearscore.user.amount_races }}</td>
+                    <td>+{{ last_result|clean_float }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+    
+    <section class="previous-races">
+        <h2>Carreras Anteriores</h2>
+        <div class="races-grid">
+            {% for entry in gps_data %}
+            <div class="race-card">
+                <img src="https://media.formula1.com/image/upload/f_auto,c_limit,q_auto,w_1320/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Saudi_Arabia_Circuit" alt="{{ entry.gp.name }}">
+                <div class="race-card-content">
+                    <h3>{{ entry.gp.name }}</h3>
+                    <p>Fecha: {{ entry.gp.date }}</p>
+        
+                    <p class="winner">
+                        Ganador: {{ entry.winner.first_name }} {{ entry.winner.last_name }}
+                    </p>
+        
+                    <p>
+                        Mejor Pronóstico: 
+                        {{ entry.best_prediction.user.username }} 
+                        ({{ entry.best_prediction.points_scored }} pts)
+                    </p>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="footer-content">
+        <div class="footer-section">
+            <h3>F1 Prode</h3>
+            <p>La mejor comunidad de pronósticos de Fórmula 1. Compite con tus amigos y demuestra tus conocimientos.</p>
+        </div>
+        
+        <div class="footer-section">
+            <h3>Enlaces rápidos</h3>
+            <ul>
+                <li><a href="#">Inicio</a></li>
+                <li><a href="#">Próxima Carrera</a></li>
+                <li><a href="pronostico.html">Mi Pronóstico</a></li>
+                <li><a href="#">Clasificación</a></li>
+                <li><a href="#">Reglas</a></li>
+            </ul>
+        </div>
+        
+        <div class="footer-section">
+            <h3>Contacto</h3>
+            <p>Email: info@f1prode.com</p>
+            <p>Síguenos en redes sociales:</p>
+            <p>Instagram | Twitter | Facebook</p>
+        </div>
+    </div>
+    
+    <div class="copyright">
+        <p>&copy; 2025 F1 Prode. Todos los derechos reservados.</p>
+    </div>
+</footer>
+</body>
+<script>
+    // Convertimos la fecha objetivo a milisegundos
+    const countdownDate = new Date("{{ countdown_target|date:'Y-m-d H:i:s' }}").getTime();
+
+    const countdownElement = document.getElementById("countdown");
+
+    const x = setInterval(function () {
+        const now = new Date().getTime();
+        const distance = countdownDate - now;
+
+        if (distance <= 0) {
+            clearInterval(x);
+            countdownElement.innerHTML = "¡La carrera comenzó!";
+            return;
+        }
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        countdownElement.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }, 1000);
+</script>
+</html>
+{% endblock content %}

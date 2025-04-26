@@ -1,0 +1,73 @@
+{% extends 'main.html' %} {% block content %}
+{% load custom_filters %}
+<div class="prode-container" style="margin-top:15px;">
+    <h1 class="prode-title">Armá tu Prode acá</h1>
+    
+    <!-- Datos ocultos para JavaScript -->
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <div id="race-data" data-race-id="{{ session.id }}"></div>
+    <form id="prediction-form" data-save-url="{% url 'save_pred' %}"></form>
+    
+    <div class="race-info">
+        <h3>{{ gp.name }} - {{ gp.location }}</h3>
+        <div class="countdown">Tiempo restante para enviar tu pronóstico: <span id="countdown">{{ remaining_time }}</span></div>
+    </div>
+    
+    <div class="prode-system">
+        <!-- Pool de pilotos -->
+        <div class="drivers-pool">
+            <h3>Pilotos Disponibles</h3>
+            <div class="drivers-grid" id="driversPool">
+                {% for driver in drivers %}
+                <div class="driver-card {{ ABB|get:driver.team_name }}" draggable="true" data-driver-id="{{ driver.id }}">
+                    <img src="{% if driver.headshot %}{{ driver.headshot }}{% endif %}" alt="{{ driver.last_name }}">
+                    <div class="driver-info">
+                        <div class="name">{{ driver.last_name }}</div>
+                        <div class="team">{{ driver.team_name }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Selección de posiciones -->
+        <div class="prode-selection">
+            <h3>Tu Pronóstico</h3>
+            <div class="positions-grid" id="positionsGrid">
+                {% for i in positions_range %}
+                <div class="position-slot position-{{ i }}" data-position="{{ i }}">
+                    <div class="position-number">{{ i }}</div>
+                    <div class="position-points">
+                        {% if i == 1 %}
+                            <span class="points-badge">5 pts</span>
+                        {% elif i == 2 %}
+                            <span class="points-badge">3 pts</span>
+                        {% elif i == 3 %}
+                            <span class="points-badge">2 pts</span>
+                        {% elif i <= 10 %}
+                            <span class="points-badge">1 pt</span>
+                        {% elif i <= 15 %}
+                            <span class="points-badge">0.5 pts</span>
+                        {% else %}
+                            <span class="points-badge">0.25 pts</span>
+                        {% endif %}
+                    </div>
+                    <div class="position-slot-content">
+                        <div class="empty-slot-msg">Arrastra un piloto aquí</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="actions">
+        <button class="action-btn secondary" id="resetBtn">Reiniciar</button>
+        <button class="action-btn" id="saveBtn">Guardar Pronóstico</button>
+    </div>
+</div>
+
+{% load static %}
+<script src="{% static 'js/predcreation.js' %}"></script>
+
+{% endblock content %}

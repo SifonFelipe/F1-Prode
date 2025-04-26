@@ -1,0 +1,422 @@
+{% extends 'main.html' %} {% block content %}
+{% load custom_filters %}
+
+<style>
+:root {
+    --f1-red: #e10600;
+    --f1-black: #15151e;
+    --f1-dark-grey: #38383f;
+    --f1-light-grey: #f1f2f3;
+    --f1-white: #ffffff;
+    --f1-accent: #0090d0;
+    --f1-green: #52E252;
+    --f1-success: rgba(82, 226, 82, 0.2); /* Fondo verde para aciertos */
+    --f1-error: rgba(255, 99, 71, 0.2); /* Fondo rojo para errores */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Titillium Web', Arial, sans-serif;
+}
+
+body {
+    background-color: var(--f1-light-grey);
+    color: var(--f1-black);
+    line-height: 1.6;
+}
+
+.comparison-container {
+    max-width: 1200px;
+    margin: 15px auto;
+    background-color: var(--f1-white);
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-top: 4px solid var(--f1-red);
+}
+
+.comparison-title {
+    color: var(--f1-red);
+    font-size: 28px;
+    margin-bottom: 20px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.race-info {
+    text-align: left;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--f1-light-grey);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.race-info h3 {
+    font-size: 24px;
+    color: var(--f1-black);
+    margin: 0;
+}
+
+.race-result-date {
+    font-size: 18px;
+    color: var(--f1-dark-grey);
+    font-weight: 600;
+}
+
+.score-summary {
+    background-color: var(--f1-light-grey);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.score-box {
+    text-align: center;
+    padding: 15px;
+    min-width: 200px;
+    border-radius: 8px;
+    background-color: var(--f1-white);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.score-box h4 {
+    font-size: 16px;
+    color: var(--f1-dark-grey);
+    margin-bottom: 10px;
+}
+
+.score-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--f1-red);
+}
+
+.comparison-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.comparison-header {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr;
+    gap: 15px;
+    padding: 10px 15px;
+    background-color: var(--f1-dark-grey);
+    color: var(--f1-white);
+    border-radius: 8px 8px 0 0;
+    font-weight: 600;
+}
+
+.comparison-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr;
+    gap: 15px;
+    padding: 10px 15px;
+    background-color: var(--f1-error);
+    border-radius: 6px;
+    align-items: center;
+    border-left: 4px solid #ff6347; /* Borde rojo para errores */
+}
+
+.comparison-row.correct {
+    background-color: var(--f1-success);
+    border-left: 4px solid var(--f1-green);
+}
+
+.position-number {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    background-color: var(--f1-black);
+    color: var(--f1-white);
+    border-radius: 50%;
+    font-weight: 700;
+}
+
+.driver-card {
+    display: flex;
+    align-items: center;
+    background-color: var(--f1-white);
+    border-radius: 6px;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-left: 6px solid #ccc;
+}
+
+.driver-card img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 15px;
+    border: 2px solid #f0f0f0;
+}
+
+.driver-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.driver-name {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.driver-team {
+    font-size: 14px;
+    color: var(--f1-dark-grey);
+}
+
+.points-badge {
+    background-color: var(--f1-accent);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: auto;
+}
+
+.comparison-row.correct .points-badge {
+    background-color: var(--f1-green);
+}
+
+.empty-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 70px;
+    border-radius: 6px;
+    background-color: #f8f8f8;
+    border: 2px dashed #ddd;
+    color: #999;
+    font-style: italic;
+}
+
+.footer-actions {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.action-btn {
+    display: inline-block;
+    background-color: var(--f1-red);
+    color: var(--f1-white);
+    text-decoration: none;
+    padding: 15px 30px;
+    border-radius: 4px;
+    font-size: 18px;
+    font-weight: 600;
+    transition: background-color 0.3s, transform 0.2s;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 10px;
+}
+
+.action-btn:hover {
+    background-color: #c10500;
+    transform: translateY(-3px);
+}
+
+.action-btn.secondary {
+    background-color: var(--f1-dark-grey);
+}
+
+.driver-card {
+    background-color: var(--f1-white);
+    border-radius: 10px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-left: 6px solid #ccc;
+    display: flex;
+    flex-direction: row; /* Cambiado de column a row */
+    align-items: center; /* Centrar verticalmente */
+    justify-content: flex-start; /* Alinear elementos a la izquierda */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    height: 100px; /* Ajustado para un diseño horizontal */
+}
+
+.position-number-1 {
+    height: 150px;
+}
+
+.driver-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.driver-card img {
+    width: fit-content ;
+    height: 110%;
+    object-fit: cover;
+    margin-right: 15%;
+    border: 0;
+    border-radius: 30%;
+}
+
+
+.driver-info {
+    width: auto; /* Cambiado de 100% a auto */
+    text-align: left; /* Cambiado de center a left */
+}
+
+.driver-info .name {
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.driver-info .team {
+    font-size: 14px;
+    color: var(--f1-dark-grey);
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: var(--f1-light-grey);
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.mercedes { border-left-color: #00D2BE; }
+.red-bull { border-left-color: #0600EF; }
+.ferrari { border-left-color: #DC0000; }
+.mclaren { border-left-color: #FF8700; }
+.aston-martin { border-left-color: #006F62; }
+.alpine { border-left-color: #0090FF; }
+.williams { border-left-color: #005AFF; }
+.haas { border-left-color: #232323; }
+.alpha-tauri { border-left-color: #2B4562; }
+.alfa-romeo { border-left-color: #900000; }
+.racing-bulls { border-left-color: #6692ff; }
+.sauber { border-left-color: #52E252; }
+
+
+@media (max-width: 768px) {
+    .comparison-header, .comparison-row {
+        grid-template-columns: 60px 1fr 1fr;
+        gap: 10px;
+        font-size: 14px;
+        padding: 8px;
+    }
+
+    .driver-card {
+        height: auto;
+        min-height: 80px;
+        padding: 10px;
+    }
+    
+    .driver-card img {
+        width: 50px;
+        height: 50px;
+        margin-right: 10px;
+    }
+    
+    .driver-name {
+        font-size: 14px;
+    }
+    
+    .driver-info .team {
+        font-size: 12px;
+    }
+    
+    .position-number {
+        width: 25px;
+        height: 25px;
+        font-size: 14px;
+    }
+    
+    .score-box {
+        min-width: 150px;
+        padding: 10px;
+    }
+
+    .driver-info .name {
+        font-size: 14px;
+    }
+}
+
+</style>
+
+<div class="comparison-container">
+    <h1 class="comparison-title">Predicción vs Resultados</h1>
+    
+    <div class="race-info">
+        <h3>{{gp.name}} - {{gp.location}}</h3>
+        <div class="race-result-date">{{gp.date}}</div>
+    </div>
+    
+    <div class="score-summary">
+        <div class="score-box">
+            <h4>Puntuación Total</h4>
+            <div class="score-value">{{points_scored}}</div>
+        </div>
+        <div class="score-box">
+            <h4>Aciertos Exactos</h4>
+            <div class="score-value">{{guessed}}</div>
+        </div>
+        <div class="score-box">
+            <h4>Posición en Ranking</h4>
+            <div class="score-value">15°</div>
+        </div>
+    </div>
+    
+    <div class="comparison-grid">
+        <div class="comparison-header">
+            <div>Pos.</div>
+            <div>Tu Predicción</div>
+            <div>Resultado Real</div>
+        </div>
+        
+        {% for prediction, result in comparision.items %}
+
+        {% if not result.disqualified %}
+        <div class="comparison-row {% if prediction.correct == True %}correct{% endif %}">
+            <div class="position-number">{{prediction.position}}</div>
+            <div class="driver-card position-number-{{prediction.position}} {{ ABB|get:prediction.driver.team_name }}">
+                <img src="{% if prediction.position == 1 %}/static/img/win-images/{{prediction.driver.last_name.lower}}-win.png{% else %}{{ prediction.driver.headshot }}{% endif %}" 
+                alt="{{prediction.driver.last_name}}">
+                <div class="driver-info">
+                    <span class="driver-name">{{prediction.driver.last_name}}</span>
+                    <span class="driver-team">{{prediction.driver.team_name}}</span>
+                </div>
+                {% if prediction.correct == True %}
+                <span class="points-badge">{{ POINTS_SYSTEM|get:prediction.position}} pts</span>
+                {% endif%}
+            </div>
+            <div class="driver-card position-number-{{prediction.position}} {{ ABB|get:result.driver.team_name}}">
+                <img src="{% if result.position == 1 %}/static/img/win-images/{{result.driver.last_name.lower}}-win.png{% else %}{{ result.driver.headshot }}{% endif %}" alt="{{result.driver.last_name}}">
+                <div class="driver-info">
+                    <span class="driver-name">{{result.driver.last_name}}</span>
+                    <span class="driver-team">{{result.driver.team_name}}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% endfor %}
+    </div>
+    
+    <div class="footer-actions">
+        <a href="#" class="action-btn secondary">Volver a Predicciones</a>
+        <a href="#" class="action-btn">Ver Clasificación General</a>
+    </div>
+</div>
+
+{% endblock content %}

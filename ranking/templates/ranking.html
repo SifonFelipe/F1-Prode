@@ -1,0 +1,573 @@
+{% extends 'main.html' %}
+
+{% block content %}
+    <title>F1 Prode - Ranking de Usuarios</title>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --f1-red: #e10600;
+            --f1-black: #15151e;
+            --f1-dark-grey: #38383f;
+            --f1-light-grey: #f1f2f3;
+            --f1-white: #ffffff;
+            --f1-accent: #0090d0;
+            --f1-green: #52E252;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Titillium Web', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--f1-light-grey);
+            color: var(--f1-black);
+            line-height: 1.6;
+        }
+
+        .ranking-container {
+            max-width: 1200px;
+            margin: 10px auto;
+            background-color: var(--f1-white);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid var(--f1-red);
+        }
+
+        .ranking-title {
+            color: var(--f1-red);
+            font-size: 24px;
+            margin-bottom: 15px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .season-info {
+            text-align: left;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--f1-light-grey);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .season-info h3 {
+            font-size: 20px;
+            color: var(--f1-black);
+            margin: 0;
+        }
+
+        .season-status {
+            font-size: 16px;
+            color: var(--f1-dark-grey);
+            font-weight: 600;
+        }
+
+        .stats-summary {
+            background-color: var(--f1-light-grey);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stats-box {
+            text-align: center;
+            padding: 15px;
+            min-width: 200px;
+            border-radius: 8px;
+            background-color: var(--f1-white);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-box h4 {
+            font-size: 14px;
+            color: var(--f1-dark-grey);
+            margin-bottom: 8px;
+        }
+
+        .stats-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--f1-red);
+        }
+
+        .search-filter {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-option {
+            padding: 8px 12px;
+            background-color: var(--f1-light-grey);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            color: var(--f1-black);
+        }
+
+        .filter-option.active {
+            background-color: var(--f1-red);
+            color: var(--f1-white);
+        }
+
+        /* Nueva estructura de usuario en franja única */
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            background-color: var(--f1-white);
+            border-radius: 8px;
+            padding: 12px 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--f1-light-grey);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .user-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: rgba(225, 6, 0, 0.02);
+        }
+
+        .user-position {
+            width: 40px;
+            margin-right: 15px;
+        }
+
+        .position-badge {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--f1-light-grey);
+            color: var(--f1-dark-grey);
+            font-weight: 700;
+        }
+
+        .position-1 .position-badge {
+            background-color: gold;
+            color: var(--f1-black);
+        }
+
+        .position-2 .position-badge {
+            background-color: silver;
+            color: var(--f1-black);
+        }
+
+        .position-3 .position-badge {
+            background-color: #cd7f32; /* bronce */
+            color: var(--f1-white);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--f1-light-grey);
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .user-meta {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+            gap: 20px;
+            padding-left: 10px;
+        }
+
+        .races {
+            font-size: 15px;
+            font-weight: 600;
+            text-align: center;
+            color: var(--f1-dark-grey);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .races-label {
+            font-size: 12px;
+            color: var(--f1-dark-grey);
+            font-weight: normal;
+        }
+
+        .points {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--f1-red);
+            text-align: center;
+            min-width: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .points-label {
+            font-size: 12px;
+            color: var(--f1-dark-grey);
+            font-weight: normal;
+        }
+
+        .highlighted {
+            background-color: rgba(82, 226, 82, 0.1);
+            border-left: 4px solid var(--f1-green);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .pagination-button {
+            padding: 8px 12px;
+            margin: 0 2px;
+            border: none;
+            background-color: var(--f1-light-grey);
+            color: var(--f1-dark-grey);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .pagination-button.active {
+            background-color: var(--f1-red);
+            color: var(--f1-white);
+        }
+
+        .pagination-button:hover:not(.active) {
+            background-color: #e0e0e0;
+        }
+
+        .footer-actions {
+            margin-top: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-btn {
+            display: inline-block;
+            background-color: var(--f1-red);
+            color: var(--f1-white);
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0;
+            width: 100%;
+        }
+
+        .action-btn:hover {
+            background-color: #c10500;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.secondary {
+            background-color: var(--f1-dark-grey);
+        }
+        
+        .action-btn.secondary:hover {
+            background-color: #2a2a30;
+        }
+
+        /* Mejoras específicas para mobile */
+        @media (max-width: 768px) {
+            .ranking-container {
+                padding: 15px;
+                margin: 5px;
+                border-radius: 6px;
+            }
+
+            .ranking-title {
+                font-size: 20px;
+            }
+
+            .season-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .season-status {
+                font-size: 14px;
+            }
+
+            .stats-summary {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+            .stats-box {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .search-filter {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-options {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .filter-option {
+                flex: 1;
+                font-size: 12px;
+                text-align: center;
+                padding: 8px 5px;
+                
+            }
+
+            .user-item {
+                flex-wrap: wrap;
+                padding: 10px;
+            }
+
+            .user-position {
+                width: 30px;
+                margin-right: 10px;
+            }
+
+            .user-info {
+                width: calc(100% - 40px);
+                margin-bottom: 8px;
+            }
+
+            .user-meta {
+                width: 100%;
+                margin-left: 40px;
+                justify-content: space-between;
+                padding-top: 8px;
+                border-top: 1px dashed var(--f1-light-grey);
+            }
+
+            .races, .points {
+                min-width: auto;
+                flex-direction: row;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .races-label, .points-label {
+                margin-top: 0;
+            }
+
+            .highlighted {
+                border-left: 4px solid var(--f1-green);
+            }
+
+            .pagination {
+                margin-top: 15px;
+            }
+
+            .pagination-button {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .footer-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        /* Mejoras para dispositivos muy pequeños */
+        @media (max-width: 375px) {
+            .ranking-title {
+                font-size: 18px;
+            }
+
+            .season-info h3 {
+                font-size: 18px;
+            }
+
+            .stats-box h4 {
+                font-size: 12px;
+            }
+
+            .stats-value {
+                font-size: 20px;
+            }
+
+            .user-name {
+                font-size: 14px;
+            }
+
+            .filter-option {
+                font-size: 11px;
+                padding: 6px 4px;
+            }
+
+            .user-avatar {
+                width: 30px;
+                height: 30px;
+            }
+
+            .position-badge {
+                width: 25px;
+                height: 25px;
+                font-size: 12px;
+            }
+
+            .points {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ranking-container">
+        <h1 class="ranking-title">Ranking de Participantes</h1>
+        
+        <div class="season-info">
+            <h3>Temporada {{year}}</h3>
+            <div class="season-status">{{races_completed}} de {{total_races}} carreras completadas</div>
+        </div>
+        
+        <div class="stats-summary">
+            <div class="stats-box">
+                <h4>Total de Participantes</h4>
+                <div class="stats-value">{{amount_users}}</div>
+            </div>
+            {% if user_score %}
+            <div class="stats-box">
+                <h4>Tu posicion</h4>
+                <div class="stats-value">{{user_score.position}}</div>
+            </div>
+            <div class="stats-box">
+                <h4>Tu puntaje</h4>
+                <div class="stats-value">{{user_score.points}}</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="search-filter">
+            <div class="filter-options">
+                <a href="?filter=all" class="filter-option {% if filter == 'all' %}active{% endif %}">Todos</a>
+                <a href="?filter=friends" class="filter-option {% if filter == 'friends' %}active{% endif %}">Amigos</a>
+                <a href="?filter=private" class="filter-option {% if filter == 'private' %}active{% endif %}">Liga Privada</a>
+            </div>
+        </div>
+        
+        <!-- Nueva estructura de lista de usuarios -->
+        <div class="user-list">
+            {% for score in page_obj %}
+            {% if score.user == request.user %}
+            <div class="highlighted">
+            {% endif %}
+            <div class="user-item position-{{ forloop.counter0|add:page_obj.start_index }}">
+                <div class="user-position">
+                    <div class="position-badge">{{ forloop.counter0|add:page_obj.start_index }}</div>
+                </div>
+                <div class="user-info">
+                    <img src="/api/placeholder/40/40" alt="Avatar" class="user-avatar">
+                    <div class="user-details">
+                        <div class="user-name">{{ score.user.username }}</div>
+                    </div>
+                </div>
+                <div class="user-meta">
+                    <div class="races">
+                        <span>{{ score.amount_predictions }}/{{ races_completed }}</span>
+                        <span class="races-label">Carreras</span>
+                    </div>
+                    <div class="points">
+                        <span>{{ score.points }}</span>
+                        <span class="points-label">Puntos</span>
+                    </div>
+                </div>
+            </div>
+            {% if score.user == request.user %}
+            </div>
+            {% endif %}
+            {% empty %}
+            <p style="text-align:center;">No se encontraron usuarios en esta vista.</p>
+            {% endfor %}
+        </div>
+        
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&filter={{ filter }}" class="pagination-button">«</a>
+            {% endif %}
+        
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="pagination-button active">{{ num }}</span>
+                {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                    <a href="?page={{ num }}&filter={{ filter }}" class="pagination-button">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+        
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&filter={{ filter }}" class="pagination-button">»</a>
+            {% endif %}
+        </div>
+        
+    </div>
+</body>
+</html>
+
+{% endblock content %}
