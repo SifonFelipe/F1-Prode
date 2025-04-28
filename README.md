@@ -82,6 +82,8 @@ Depending on whether you're using a `.venv` or not:
   ```
   `uv run` ensures your commands use the correct environment and installed packages even without an active .venv.
 
+---
+
 #### 3. **Run database migrations**:
 
 This will depend on which choice you are using (*.venv* or not).
