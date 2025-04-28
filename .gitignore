@@ -1,8 +1,14 @@
-# Python
+# Python-generated files
 __pycache__/
-*.pyc
-*.pyo
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
 *.pyd
+
+# Virtual environments
+.venv
 
 # Django
 *.sqlite3
