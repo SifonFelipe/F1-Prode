@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateCountdown() {
         const countdownEl = document.getElementById('countdown');
 
-        if (countdownEl.textContent == "out") {
+        if (countdownEl.textContent == "¡Tiempo finalizado!") {
             countdownEl.textContent = "¡Tiempo finalizado!";
             countdownEl.style.color = "var(--f1-red)";
             const actionsDiv = document.querySelector(`.actions`);

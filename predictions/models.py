@@ -121,6 +121,18 @@ class PredictedPosition(models.Model):
     def __str__(self):
         return f"{self.driver.first_name} {self.driver.last_name} - Predicted Position: {self.position}"
     
+class PredictedPole(models.Model):
+    prediction = models.ForeignKey(Prediction, on_delete=models.CASCADE, related_name='predicted_poles')
+    driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True, blank=True)
+    correct = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['prediction'], name='unique_prediction_for_pole')
+        ]
+
+    def __str__(self):
+        return f"{self.driver} for Pole Position in {self.prediction.session.grand_prix.name}"
 class Result(models.Model):
     """
     Results model.
@@ -146,3 +158,11 @@ class Result(models.Model):
     def __str__(self):
         return f"{self.session} - {self.driver} - {self.position}"
     
+class ResultPole(models.Model):
+    driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    lap_time = models.DurationField(blank=True, null=True)
+    for_which_team = models.ForeignKey(RacingTeam, on_delete=models.DO_NOTHING, null=True, blank=True)
+
+    def __str__(self):
+        return f"Pole Position for {self.driver.name} in {self.session.grand_prix.name}"

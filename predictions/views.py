@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 
 import json
 
-from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result
+from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result, PredictedPole
 
 FNAME_TO_CLASS = {
     "Red Bull Racing": "red-bull",
@@ -41,7 +41,7 @@ def createPred(request, year, location, session_type):
     remaining = session.session_date - now
 
     if remaining < timedelta(0):
-        remaining_time = "outa"
+        remaining_time = "¡Tiempo finalizado!"
     else:
         amount_seconds = int(remaining.total_seconds())
 
@@ -50,7 +50,12 @@ def createPred(request, year, location, session_type):
 
         remaining_time = f"{hours:02}:{minutes:02}:{seconds:02}"
 
-    context = {'drivers': drivers, 'positions_range': position_range, "ABB": FNAME_TO_CLASS, "gp": gp, "session": session, "remaining_time": remaining_time}
+    context = {'drivers': drivers, 'positions_range': position_range, "ABB": FNAME_TO_CLASS, "gp": gp, 
+               "session": session, "remaining_time": remaining_time}
+    
+    if session_type == "Qualifying":
+        return render(request, "pole_predicts.html", context)
+
     return render(request, "predicts.html", context)
 
 
@@ -59,19 +64,19 @@ def save_pred(request):
         try:
             data = json.loads(request.body)
 
+            print(data)
+
             race_id = data.get("race_id")
             positions = data.get("positions", {})
-
-            if len(positions) != 20:
-                return JsonResponse({"success": False, "error": "not enough data"})
 
             if not race_id or not positions:
                 return JsonResponse({"success": False, "error": "Datos incompletos"}, status=400)
 
             session = Session.objects.get(id=race_id)
+            prediction, pred_created = Prediction.objects.get_or_create(user=request.user, session=session)
 
             """
-            for testing
+            not using for testing
 
             now = datetime.now(timezone.utc)
             remaining = session.session_date - now
@@ -79,25 +84,47 @@ def save_pred(request):
             if remaining < timedelta(0):
                 return JsonResponse({"success": False, "error": "Out of time"})
             """
-
-            prediction, created = Prediction.objects.get_or_create(user=request.user, session=session)
-
-            if not created:
-                try:
-                    PredictedPosition.objects.filter(prediction=prediction).delete()
-                except:
-                    None
-
-            for pos, driver_id in positions.items():
-                driver = Driver.objects.get(id=driver_id)
                 
-                PredictedPosition.objects.create(
-                    prediction=prediction,
-                    driver=driver,
-                    position=int(pos)
-                )
+            if session.session_type == "Qualifying":
+                if len(positions) != 1:
+                    return JsonResponse({"success": False, "error": "not enough data"})
+                
+                pole, created = PredictedPole.objects.get_or_create(prediction=prediction)
+                
+                print(positions['1'])
+                driver = Driver.objects.get(id=positions['1'])
 
-                print(f"Guardando: Carrera {race_id} - Pos {pos}: Piloto {driver_id}")  # DEBUG
+                if not created:
+                    pole.driver=driver
+                    pole.save()
+                else:
+                    PredictedPole.objects.create(
+                        prediction=prediction,
+                        driver=driver,
+                    )
+
+                print(f"Guardando: Qualy {race_id} - 1 - Piloto {driver.last_name}")
+
+            elif session.session_type == "Race":
+                if len(positions) != 20:
+                    return JsonResponse({"success": False, "error": "not enough data"})
+
+                if not pred_created:
+                    try:
+                        PredictedPosition.objects.filter(prediction=prediction).delete()
+                    except:
+                        None
+
+                for pos, driver_id in positions.items():
+                    driver = Driver.objects.get(id=driver_id)
+                    
+                    PredictedPosition.objects.create(
+                        prediction=prediction,
+                        driver=driver,
+                        position=int(pos)
+                    )
+
+                    print(f"Guardando: Carrera {race_id} - Pos {pos}: Piloto {driver_id}")  # DEBUG
 
             return JsonResponse({"success": True})
         

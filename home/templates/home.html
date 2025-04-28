@@ -1,13 +1,15 @@
 {% extends 'main.html' %} {% block content %}
 
 {% load home_filters %}
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/home-style.css' %}">
 
 <main class="container">
     <section class="hero">
         <h1>Pronósticos F1</h1>
         <p>¡Demuestra tus conocimientos de Fórmula 1 y compite contra tus amigos!</p>
     </section>
-    
+
     <section class="next-race">
         <h2>Próxima Carrera: {{next_gp.name}}</h2>
         <div class="race-info">
