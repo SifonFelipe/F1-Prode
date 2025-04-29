@@ -1,4 +1,4 @@
-from predictions.models import Driver, Prediction, RacingTeam, Result, Session, GrandPrix, PredictedPosition
+from predictions.models import Driver, Prediction, RacingTeam, Result, Session, GrandPrix, PredictedPosition, ResultPole, PredictedPole
 from ranking.models import YearScore
 
 from datetime import datetime, date, timedelta
@@ -17,8 +17,10 @@ for gp in grand_prixs:
 
     for session in sessions:
         Result.objects.filter(session=session).delete()
+        ResultPole.objects.filter(session=session).delete()
 
         predictions = Prediction.objects.filter(session=session)
         predictions.update(points_scored=0)
 
         PredictedPosition.objects.filter(prediction__in=predictions).update(correct=False)
+        PredictedPole.objects.filter(prediction__in=predictions).update(correct=False)

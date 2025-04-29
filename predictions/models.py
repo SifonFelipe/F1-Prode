@@ -122,7 +122,7 @@ class PredictedPosition(models.Model):
         return f"{self.driver.first_name} {self.driver.last_name} - Predicted Position: {self.position}"
     
 class PredictedPole(models.Model):
-    prediction = models.ForeignKey(Prediction, on_delete=models.CASCADE, related_name='predicted_poles')
+    prediction = models.ForeignKey(Prediction, on_delete=models.CASCADE, related_name='predicted_pole')
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True, blank=True)
     correct = models.BooleanField(default=False)
 
@@ -165,4 +165,4 @@ class ResultPole(models.Model):
     for_which_team = models.ForeignKey(RacingTeam, on_delete=models.DO_NOTHING, null=True, blank=True)
 
     def __str__(self):
-        return f"Pole Position for {self.driver.name} in {self.session.grand_prix.name}"
+        return f"Pole Position for {self.driver.last_name} in {self.session.grand_prix.name}"
