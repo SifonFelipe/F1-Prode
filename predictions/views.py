@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.db.models import Prefetch
+
 from datetime import datetime, timezone, timedelta
 
 import json
@@ -32,10 +34,25 @@ def createPred(request, year, location, session_type):
     location.capitalize()
     session_type.capitalize()
 
-    drivers = Driver.objects.all()
+
+    # LATER create line-up model for each race for situations when
+    # there aren't the same 20 drivers as before
+    # so you will get session.lineup (for example) to drivers
+    gp = (
+        GrandPrix.objects
+        .filter(year=year, location=location)
+        .prefetch_related(
+            Prefetch(
+                'sessions',  # usá el related_name correcto
+                queryset=Session.objects.filter(session_type=session_type, grand_prix__location=location, grand_prix__year=year),
+                to_attr='session'
+            )
+        )
+    ).first()
+
+    drivers = Driver.objects.all()[:20]
     position_range = [x for x in range(1, 21)]
-    gp = GrandPrix.objects.get(year=year, location=location)
-    session = Session.objects.get(grand_prix=gp, session_type=session_type)
+    session = gp.session[0]
 
     now = datetime.now(timezone.utc)
     remaining = session.session_date - now

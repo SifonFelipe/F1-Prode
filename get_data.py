@@ -1,7 +1,11 @@
 import fastf1
 import datetime
+import logging
 
 from predictions.models import GrandPrix, Session
+
+#disable logs for fastf1
+logging.getLogger('fastf1').setLevel(logging.CRITICAL)
 
 #refresh within a year
 year = datetime.date.today().year
