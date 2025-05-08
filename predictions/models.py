@@ -66,12 +66,19 @@ class Session(models.Model):
         ('Race', 'Race'),
     ]
 
+    STATES = [
+        ('NOT FINISHED', 'NF'),
+        ('FINISHED WAITING COMPARE', 'FWC'),
+        ('FINISHED', 'F')
+    ]
+
     grand_prix = models.ForeignKey(GrandPrix, on_delete=models.CASCADE, related_name='sessions')
     session_type = models.CharField(max_length=50, choices=SESSION_TYPES)
-    session_date = models.DateTimeField()  # Fecha y hora de la sesión
+    session_date = models.DateTimeField()
+    state = models.CharField(max_length=50, choices=STATES, default="NF")
 
     def __str__(self):
-        return f"{self.session_type} - {self.grand_prix.name}"
+        return f"{self.session_type} - {self.grand_prix.name} - {self.grand_prix.year}"
 
     
 class RacingTeam(models.Model):
@@ -89,12 +96,18 @@ class Prediction(models.Model):
     Prediction model.
     It works as a manager for the predictions of a user for a session.
     """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # Relación con el usuario
-    session = models.ForeignKey(Session, on_delete=models.CASCADE)  # Relación con el Gran Premio
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
     points_scored = models.DecimalField(default=0, decimal_places=2, max_digits=6)
-    
+
+    @property
+    def pole(self):
+        return self.predicted_pole.first()
     class Meta:
         ordering = ["-points_scored", "user"]
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'session'], name='unique_prediction_per_user_per_session')
+        ]
 
     def __str__(self):
         return f"Prediction by {self.user.username} for {self.session.grand_prix.name}" 
@@ -133,6 +146,7 @@ class PredictedPole(models.Model):
 
     def __str__(self):
         return f"{self.driver} for Pole Position in {self.prediction.session.grand_prix.name}"
+
 class Result(models.Model):
     """
     Results model.

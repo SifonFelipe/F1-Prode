@@ -14,6 +14,7 @@ YearScore.objects.filter(year=year).update(points=0)
 
 for gp in grand_prixs:
     sessions = Session.objects.filter(grand_prix=gp)
+    sessions.update(state="NF")
 
     for session in sessions:
         Result.objects.filter(session=session).delete()

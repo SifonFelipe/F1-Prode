@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 
 import json
 
-from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result, PredictedPole
+from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result, PredictedPole, ResultPole
 
 FNAME_TO_CLASS = {
     "Red Bull Racing": "red-bull",
@@ -41,7 +41,7 @@ def createPred(request, year, location, session_type):
     remaining = session.session_date - now
 
     if remaining < timedelta(0):
-        remaining_time = "¡Tiempo finalizado!"
+        remaining_time = "¡Tiempo finalizado"
     else:
         amount_seconds = int(remaining.total_seconds())
 
@@ -76,15 +76,13 @@ def save_pred(request):
             prediction, pred_created = Prediction.objects.get_or_create(user=request.user, session=session)
 
             """
-            not using for testing
-
             now = datetime.now(timezone.utc)
             remaining = session.session_date - now
             
             if remaining < timedelta(0):
                 return JsonResponse({"success": False, "error": "Out of time"})
             """
-                
+
             if session.session_type == "Qualifying":
                 if len(positions) != 1:
                     return JsonResponse({"success": False, "error": "not enough data"})
@@ -141,10 +139,14 @@ def save_pred(request):
 def compare_results(request, year, location, session_type):
     gp = GrandPrix.objects.get(year=int(year), location=location)
     session = Session.objects.get(grand_prix=gp, session_type=session_type)
-    results = Result.objects.filter(session=session)
-
     predictions_user = Prediction.objects.get(user=request.user, session=session)
-    predictions = PredictedPosition.objects.filter(prediction=predictions_user)
+
+    if session_type == "Qualifying":
+        results = ResultPole.objects.filter(session=session)
+        predictions = PredictedPole.objects.filter(prediction=predictions_user)
+    else:
+        results = Result.objects.filter(session=session)    
+        predictions = PredictedPosition.objects.filter(prediction=predictions_user)
 
     comparision = {}
     guessed = 0

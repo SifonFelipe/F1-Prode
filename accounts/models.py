@@ -19,7 +19,7 @@ class CustomUser(AbstractUser):
     @property
     def amount_races(self):
         from predictions.models import Prediction
-        return Prediction.objects.filter(user=self).count()
+        return Prediction.objects.filter(user=self, session__session_type="Race").count()
     
     @property
     def total_points(self):
