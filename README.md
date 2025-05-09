@@ -7,7 +7,7 @@ Users can:
 - Earn points based on the accuracy of their predictions.
 - Compete in global rankings, among friends, or within private leagues.
 
-<img src="https://raw.githubusercontent.com/SifonFelipe/F1-Prode/refs/heads/main/videos/create-predictions.gif" width="800" alt="Create predictions demo" />
+<img src="videos/create-predictions.gif" width="800" alt="Create predictions demo" />
 
 ---
 
