@@ -5,27 +5,6 @@ from datetime import datetime
 from django.db.models import Sum
 
 class CustomUser(AbstractUser):
-
-    @property
-    def amount_wrong(self):
-        from predictions.models import PredictedPosition
-        return PredictedPosition.objects.filter(prediction__user=self, correct=False).count()
-
-    @property
-    def amount_guessed(self):
-        from predictions.models import PredictedPosition
-        return PredictedPosition.objects.filter(prediction__user=self, correct=True).count()
-
-    @property
-    def amount_races(self):
-        from predictions.models import Prediction
-        return Prediction.objects.filter(user=self, session__session_type="Race").count()
-    
-    @property
-    def total_points(self):
-        from ranking.models import YearScore
-        return YearScore.objects.filter(user=self).aggregate(total=Sum('points'))['total'] or 0
-
     @property   #property hace que sea un atributo de la clase. No hace falta llamar a CustomUser.friends(), solo a CustomUser.friends
     def friends(self):
         sent = CustomUser.objects.filter(
