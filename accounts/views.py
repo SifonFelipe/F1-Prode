@@ -1,9 +1,9 @@
 from django.shortcuts import render
-from django.db.models import Count, Q, Sum, Prefetch
+from django.db.models import Count, Q
 
 from .models import CustomUser
 from ranking.models import YearScore
-from predictions.models import Prediction, GrandPrix, Session
+from predictions.models import Prediction, GrandPrix
 
 from datetime import datetime
 
