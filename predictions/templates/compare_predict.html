@@ -355,7 +355,7 @@ body {
 </style>
 
 <div class="comparison-container">
-    <h1 class="comparison-title">Predicción vs Resultados</h1>
+    <h1 class="comparison-title">{% if session_type == "Qualifying" %}Qualifying{% elif session_type == "Race" %}Race{% endif %}</h1>
     
     <div class="race-info">
         <h3>{{gp.name}} - {{gp.location}}</h3>
@@ -388,20 +388,20 @@ body {
 
         {% if not result.disqualified %}
         <div class="comparison-row {% if prediction.correct == True %}correct{% endif %}">
-            <div class="position-number">{{prediction.position}}</div>
-            <div class="driver-card position-number-{{prediction.position}} {{ ABB|get:prediction.driver.team_name }}">
-                <img src="{% if prediction.position == 1 %}/static/img/win-images/{{prediction.driver.last_name.lower}}-win.png{% else %}{{ prediction.driver.headshot }}{% endif %}" 
+            <div class="position-number">{% if session_type != "Qualifying"%}{{prediction.position}}{% else %}1{% endif %}</div>
+            <div class="driver-card position-number-{% if session_type != 'Qualifying'%}{{prediction.position}}{% else %}1{% endif %} {{ ABB|get:prediction.driver.team_name }}">
+                <img src="{% if prediction.position == 1 or session_type == 'Qualifying' %}/static/img/win-images/{{prediction.driver.last_name.lower}}-win.png{% else %}{{ prediction.driver.headshot }}{% endif %}" 
                 alt="{{prediction.driver.last_name}}">
                 <div class="driver-info">
                     <span class="driver-name">{{prediction.driver.last_name}}</span>
                     <span class="driver-team">{{prediction.driver.team_name}}</span>
                 </div>
                 {% if prediction.correct == True %}
-                <span class="points-badge">{{ POINTS_SYSTEM|get:prediction.position}} pts</span>
+                <span class="points-badge">{% if session_type != "Qualifying" %}{{ POINTS_SYSTEM|get:prediction.position}}{% else %}{{POINTS_SYSTEM|get:1}}{% endif %} pts</span>
                 {% endif%}
             </div>
-            <div class="driver-card position-number-{{prediction.position}} {{ ABB|get:result.driver.team_name}}">
-                <img src="{% if result.position == 1 %}/static/img/win-images/{{result.driver.last_name.lower}}-win.png{% else %}{{ result.driver.headshot }}{% endif %}" alt="{{result.driver.last_name}}">
+            <div class="driver-card position-number-{% if session_type != 'Qualifying'%}{{prediction.position}}{% else %}1{% endif %} {{ ABB|get:result.driver.team_name }}">
+                <img src="{% if result.position == 1 or session_type == 'Qualifying' %}/static/img/win-images/{{result.driver.last_name.lower}}-win.png{% else %}{{ result.driver.headshot }}{% endif %}" alt="{{result.driver.last_name}}">
                 <div class="driver-info">
                     <span class="driver-name">{{result.driver.last_name}}</span>
                     <span class="driver-team">{{result.driver.team_name}}</span>
@@ -409,7 +409,6 @@ body {
             </div>
         </div>
         {% endif %}
-
         {% endfor %}
     </div>
     

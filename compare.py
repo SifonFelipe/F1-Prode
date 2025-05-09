@@ -5,14 +5,7 @@ from django.db.models import Prefetch
 
 from datetime import datetime
 
-POINTS_BY_POSITION_RACE = {
-    1: 5,
-    2: 3,
-    3: 2,
-    4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 9: 1, 10: 1,
-    11: 0.5, 12: 0.5, 13: 0.5, 14: 0.5, 15: 0.5,
-    16: 0.25, 17: 0.25, 18: 0.25, 19: 0.25, 20: 0.25
-}
+from F1Prode.static_variables import PRED_POINTS_BY_POSITION, PRED_POLE_POINTS
 
 now = datetime.now()
 year = now.year
@@ -26,7 +19,7 @@ def update_rankings(year):
 def create_race_results_comparing_list(session):
     drivers_positions = []
 
-    for result in session.result_set.all():
+    for result in session.race_results.all():
         drivers_positions.append(result.driver.number)
 
     return drivers_positions
@@ -40,14 +33,14 @@ def compare_race_predictions_and_update(session, drivers_positions):
     updated_ys = []
     updated_pred_pos = []
 
-    for prediction in session.prediction_set.all():
+    for prediction in session.predictions.all():
         predicted_positions = prediction.predicted_positions.all()
 
         points = 0
         
         for idx, predicted_position in enumerate(predicted_positions):
             if drivers_positions[idx] == predicted_position.driver.number:
-                points += POINTS_BY_POSITION_RACE[idx+1]
+                points += PRED_POINTS_BY_POSITION[idx+1]
                 predicted_position.correct = True
                 
                 updated_pred_pos.append(predicted_position)
@@ -71,14 +64,14 @@ def compare_qualy_predictions_and_update(session, pole_result):
     updated_ys = []
     updated_pred_pole = []
 
-    for prediction in session.prediction_set.all():
+    for prediction in session.predictions.all():
         pole_pred = prediction.predicted_pole.all().first()
         
         if pole_pred.driver == pole_result.driver:
             year_score = year_scores_dict[(prediction.user_id, year)]
 
-            prediction.points_scored += 4
-            year_score.points += 4
+            prediction.points_scored += PRED_POLE_POINTS
+            year_score.points += PRED_POLE_POINTS
             pole_pred.correct = True
 
             updated_preds.append(prediction)
@@ -95,7 +88,7 @@ sessions_to_compare = (
     .select_related('grand_prix')
     .prefetch_related(
         Prefetch(
-            'prediction_set',
+            'predictions',
             queryset=Prediction.objects.select_related('user').prefetch_related(
                 'predicted_positions__driver',
                 'predicted_pole__driver'
@@ -103,12 +96,12 @@ sessions_to_compare = (
         ),
 
         Prefetch(
-            'result_set',
+            'race_results',
             queryset=Result.objects.select_related('driver', 'for_which_team')
         ),
 
         Prefetch(
-            'resultpole_set',
+            'pole_result',
             queryset=ResultPole.objects.select_related('driver', 'for_which_team')
         )
 
@@ -125,9 +118,9 @@ for session in sessions_to_compare:
         compare_race_predictions_and_update(session, drivers_positions)
 
     elif session_type == "Qualifying":
-        result = session.resultpole_set.all().first()
+        result = session.pole_result.all().first()
         compare_qualy_predictions_and_update(session, result)
 
-    print("\nDone!\n")
+    print("Done!")
 
 update_rankings(year)

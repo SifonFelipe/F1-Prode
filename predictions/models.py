@@ -4,19 +4,28 @@ from datetime import datetime
 
 year = datetime.now().year
 
+class RacingTeam(models.Model):
+    name = models.CharField(max_length=100)
+    year = models.IntegerField(default=year)
+    points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
+
+    def __str__(self):
+        return f"{self.name} - {self.year}"
 class Driver(models.Model):
     """
     Drivers model.
     A driver for year.
     """
+    
+    year = models.IntegerField(default=datetime.now().year)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     number = models.IntegerField()
     team_name = models.CharField(max_length=60)
+    racing_team = models.ForeignKey(RacingTeam, on_delete=models.DO_NOTHING, related_name='drivers')
     country = models.CharField(max_length=70, null=True, blank=True)
     headshot = models.URLField(max_length=500)
     points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
-    year = models.IntegerField(default=datetime.now().year)
 
     class Meta:
         ordering = ["-points", "number"]
@@ -79,17 +88,6 @@ class Session(models.Model):
 
     def __str__(self):
         return f"{self.session_type} - {self.grand_prix.name} - {self.grand_prix.year}"
-
-    
-class RacingTeam(models.Model):
-    name = models.CharField(max_length=100)
-    year = models.IntegerField(default=year)
-    driver1 = models.ForeignKey(Driver, blank=True, null=True, on_delete=models.DO_NOTHING, related_name="first_driver")
-    driver2 = models.ForeignKey(Driver, blank=True, null=True, on_delete=models.DO_NOTHING, related_name="second_driver")
-    points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
-
-    def __str__(self):
-        return f"{self.name} - {self.year}"
     
 class Prediction(models.Model):
     """
@@ -97,7 +95,7 @@ class Prediction(models.Model):
     It works as a manager for the predictions of a user for a session.
     """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name="predictions")
     points_scored = models.DecimalField(default=0, decimal_places=2, max_digits=6)
 
     @property
@@ -153,7 +151,7 @@ class Result(models.Model):
     It contains the result for each driver in a session.
     """
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
-    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name="race_results")
     position = models.IntegerField()
     laps_completed = models.IntegerField()
     fastest_lap = models.DurationField(blank=True, null=True)
@@ -174,7 +172,7 @@ class Result(models.Model):
     
 class ResultPole(models.Model):
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
-    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name="pole_result")
     lap_time = models.DurationField(blank=True, null=True)
     for_which_team = models.ForeignKey(RacingTeam, on_delete=models.DO_NOTHING, null=True, blank=True)
 
