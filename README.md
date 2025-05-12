@@ -3,7 +3,7 @@
 A Django-based Formula 1 prediction project.
 
 Users can:
-- Predict the results of each Grand Prix during the season.
+- Predict the results of each Grand Prix during the season (Races, Sprints, Poles).
 - Earn points based on the accuracy of their predictions.
 - Compete in global rankings, among friends, or within private leagues.
 
