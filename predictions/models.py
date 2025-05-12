@@ -10,7 +10,7 @@ class RacingTeam(models.Model):
     points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
 
     def __str__(self):
-        return f"{self.name} - {self.year}"
+        return f"[{self.year}] {self.name}"
 class Driver(models.Model):
     """
     Drivers model.
@@ -31,7 +31,7 @@ class Driver(models.Model):
         ordering = ["-points", "number"]
 
     def __str__(self):
-        return f"{self.last_name} - {self.year}"
+        return f"[{self.year}] {self.first_name} {self.last_name} ( {self.number} )"
     
 class GrandPrix(models.Model):
     """
@@ -59,7 +59,7 @@ class GrandPrix(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.name} - {self.location} - {self.date}"
+        return f"[{self.year}] {self.name} - {"Ended" if self.ended else "Not Ended"}"
     
 class Session(models.Model):
     """
@@ -76,9 +76,9 @@ class Session(models.Model):
     ]
 
     STATES = [
-        ('NOT FINISHED', 'NF'),
-        ('FINISHED WAITING COMPARE', 'FWC'),
-        ('FINISHED', 'F')
+        ('NOT FINISHED', 'NF'), #waiting for results
+        ('FINISHED WAITING COMPARE', 'FWC'), #finished but not compared with predictions
+        ('FINISHED', 'F') #finished everything
     ]
 
     grand_prix = models.ForeignKey(GrandPrix, on_delete=models.CASCADE, related_name='sessions')
@@ -87,7 +87,7 @@ class Session(models.Model):
     state = models.CharField(max_length=50, choices=STATES, default="NF")
 
     def __str__(self):
-        return f"{self.session_type} - {self.grand_prix.name} - {self.grand_prix.year}"
+        return f"[{self.grand_prix.year} - {self.grand_prix.name}] {self.session_type} - {self.state}"
     
 class Prediction(models.Model):
     """
@@ -108,7 +108,7 @@ class Prediction(models.Model):
         ]
 
     def __str__(self):
-        return f"Prediction by {self.user.username} for {self.session.grand_prix.name}" 
+        return f"[{self.session.grand_prix.year} - {self.session.grand_prix.name}] Prediction by {self.user.username} for {self.session.session_type}" 
 
 class PredictedPosition(models.Model):
     """
@@ -130,7 +130,7 @@ class PredictedPosition(models.Model):
         ordering = ["position"]
 
     def __str__(self):
-        return f"{self.driver.first_name} {self.driver.last_name} - Predicted Position: {self.position}"
+        return f"[{self.prediction.session.grand_prix.year} - {self.prediction.session.grand_prix.name} - {self.prediction.session.session_type}] {self.position} - {self.driver.last_name}"
     
 class PredictedPole(models.Model):
     prediction = models.ForeignKey(Prediction, on_delete=models.CASCADE, related_name='predicted_pole')
@@ -143,7 +143,7 @@ class PredictedPole(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.driver} for Pole Position in {self.prediction.session.grand_prix.name}"
+        return f"[{self.prediction.session.grand_prix.year} - {self.prediction.session.grand_prix.name} - {self.prediction.session.session_type}] POLE - {self.driver.last_name}"
 
 class Result(models.Model):
     """
@@ -168,7 +168,7 @@ class Result(models.Model):
         ordering = ["position"]
 
     def __str__(self):
-        return f"{self.session} - {self.driver} - {self.position}"
+        return f"[{self.session.grand_prix.year} - {self.session.grand_prix.name} - {self.session.session_type}] {self.position} - {self.driver.last_name}"
     
 class ResultPole(models.Model):
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
@@ -177,4 +177,4 @@ class ResultPole(models.Model):
     for_which_team = models.ForeignKey(RacingTeam, on_delete=models.DO_NOTHING, null=True, blank=True)
 
     def __str__(self):
-        return f"Pole Position for {self.driver.last_name} in {self.session.grand_prix.name}"
+        return f"[{self.session.grand_prix.year} - {self.session.grand_prix.name} - {self.session.session_type}] POLE - {self.driver.last_name}"

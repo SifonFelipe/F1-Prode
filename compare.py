@@ -4,8 +4,9 @@ from ranking.models import YearScore
 from django.db.models import Prefetch
 
 from datetime import datetime
+from decimal import Decimal
 
-from F1Prode.static_variables import PRED_POINTS_BY_POSITION, PRED_POLE_POINTS
+from F1Prode.static_variables import PRED_POINTS_BY_POSITION, PRED_POLE_POINTS, SPRINT_PRED_POINTS_BY_POSITION
 
 now = datetime.now()
 year = now.year
@@ -28,7 +29,7 @@ def create_race_results_comparing_list(session):
 yearscores = YearScore.objects.filter(year=year)
 year_scores_dict = {(ys.user_id, ys.year): ys for ys in yearscores}
 
-def compare_race_predictions_and_update(session, drivers_positions):
+def compare_race_predictions_and_update(session, drivers_positions, SCORE_FORMAT):
     updated_preds = []
     updated_ys = []
     updated_pred_pos = []
@@ -40,7 +41,7 @@ def compare_race_predictions_and_update(session, drivers_positions):
         
         for idx, predicted_position in enumerate(predicted_positions):
             if drivers_positions[idx] == predicted_position.driver.number:
-                points += PRED_POINTS_BY_POSITION[idx+1]
+                points += SCORE_FORMAT[idx+1]
                 predicted_position.correct = True
                 
                 updated_pred_pos.append(predicted_position)
@@ -48,8 +49,8 @@ def compare_race_predictions_and_update(session, drivers_positions):
         if points != 0:
             year_score = year_scores_dict[(prediction.user_id, year)]
 
-            prediction.points_scored += points
-            year_score.points += points
+            prediction.points_scored += Decimal(str(points))
+            year_score.points += Decimal(str(points))
 
             updated_preds.append(prediction)
             updated_ys.append(year_score)
@@ -113,9 +114,11 @@ for session in sessions_to_compare:
     session_type = session.session_type
     print(f"\nComparing Results and Predictions of\n{session_type} - {session.grand_prix.name}")
     
-    if session_type == "Race":
+    if session_type == "Race" or "Sprint":
         drivers_positions = create_race_results_comparing_list(session)
-        compare_race_predictions_and_update(session, drivers_positions)
+
+        score_format = PRED_POINTS_BY_POSITION if session_type == "Race" else SPRINT_PRED_POINTS_BY_POSITION
+        compare_race_predictions_and_update(session, drivers_positions, score_format)
 
     elif session_type == "Qualifying":
         result = session.pole_result.all().first()

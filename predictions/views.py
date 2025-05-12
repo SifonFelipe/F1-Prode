@@ -132,7 +132,7 @@ def save_pred(request):
             pole.driver = driver
             pole.save()
 
-        elif session.session_type == "Race":
+        elif session.session_type == "Race" or session.session_type == "Sprint":
             if len(positions) != DRIVERS_BY_RACE:
                 return JsonResponse({"success": False, "error": "not enough data"})
 
