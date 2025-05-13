@@ -1,0 +1,109 @@
+{% extends "main.html" %}
+
+{% block content %}
+<!-- Incluye el CSS en tu página -->
+<style>
+/* Estilos para el formulario de Liga Privada F1 */
+.f1-form-container {
+    max-width: 600px;
+    margin: 30px auto;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    border-top: 5px solid #e10600; /* Color rojo F1 */
+}
+
+.f1-form-container h2 {
+    color: #15151e; /* Color azul oscuro F1 */
+    text-align: center;
+    margin-bottom: 25px;
+    font-weight: 600;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.f1-form-container h2:after {
+    content: '';
+    position: absolute;
+    width: 50px;
+    height: 3px;
+    background: #e10600;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Estilo para los campos automáticos de Django */
+.f1-form-container p {
+    margin-bottom: 25px;
+}
+
+.f1-form-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #15151e;
+}
+
+.f1-form-container input[type="text"],
+.f1-form-container input[type="password"] {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    box-sizing: border-box;
+}
+
+.f1-form-container input[type="text"]:focus,
+.f1-form-container input[type="password"]:focus {
+    border-color: #e10600;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.1);
+}
+
+.f1-form-container .helptext {
+    display: block;
+    margin-top: 5px;
+    color: #777;
+    font-size: 13px;
+}
+
+.f1-form-container .errorlist {
+    color: #e10600;
+    list-style-type: none;
+    padding: 0;
+    margin: 5px 0 0 0;
+    font-size: 13px;
+}
+
+.submit-button {
+    background: #e10600;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.3s;
+}
+
+.submit-button:hover {
+    background: #d10500;
+}
+</style>
+
+<div class="f1-form-container">
+    <h2>Create your own league!</h2>
+    
+    <form method="post" autocomplete="off">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="submit-button">Crear League</button>
+    </form>
+</div>
+{% endblock %}

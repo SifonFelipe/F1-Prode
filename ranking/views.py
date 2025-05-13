@@ -1,14 +1,14 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Prefetch
+from django.contrib import messages
 
-from .models import YearScore
+from .models import YearScore, PrivateLeague
 from predictions.models import GrandPrix
+from accounts.models import CustomUser
+from .forms import PrivateLeagueForm
 
-from datetime import datetime
-from itertools import chain
-
-year = datetime.now().year 
+from itertools import chain 
 
 def global_ranking(request, year):
     year = int(year)
@@ -61,3 +61,89 @@ def global_ranking(request, year):
     }
 
     return render(request, "ranking.html", context)
+
+def createLeague(request):
+    print(request.user)
+
+    if request.method == "POST":
+        form = PrivateLeagueForm(request.POST)
+
+        if form.is_valid():
+            form.save(creator=request.user)
+            return redirect('home')
+        
+    else:
+        form = PrivateLeagueForm()
+
+    return render(request, 'create_league.html', {'form': form})
+
+def viewLeague(request, username, leaguename):
+    creator = (
+        CustomUser.objects
+        .filter(username=username)
+        .prefetch_related(
+            Prefetch(
+                "created_leagues",
+                queryset=PrivateLeague.objects.filter(name=leaguename).prefetch_related("members__season_scores")
+            ),
+        )
+    ).first()
+
+    league = creator.created_leagues.all().first()
+    members = league.members.all()
+
+    all_years = set()
+    for member in members:
+        for score in member.season_scores.all():
+            all_years.add(score.year)
+
+    years = sorted(all_years, reverse=True)
+
+    context = {'league': league, 'members': members, 'years': years}
+    return render(request, "view_league.html", context)
+
+
+def join_league(request, username, leaguename):
+    if request.method == "POST":
+        password = request.POST.get("password", "")
+        user = request.user
+
+        creator=(
+            CustomUser.objects
+            .filter(username=username)
+            .prefetch_related(
+                Prefetch(
+                    "created_leagues",
+                    queryset=PrivateLeague.objects.filter(name=leaguename).prefetch_related("members")
+                )
+            )
+        ).first()
+
+        league = creator.created_leagues.all().first()
+
+        if league.check_password(password):
+            league.members.add(user)
+            messages.success(request, "Te uniste correctamente.")
+        else:
+            messages.error(request, "Contraseña incorrecta.")
+
+    return redirect("view-league", username=username, leaguename=leaguename)
+
+def leave_league(request, username, leaguename):
+    if request.method == "POST":
+        user = request.user
+        creator=(
+            CustomUser.objects
+            .filter(username=username)
+            .prefetch_related(
+                Prefetch(
+                    "created_leagues",
+                    queryset=PrivateLeague.objects.filter(name=leaguename)
+                )
+            )
+        ).first()
+
+        league = creator.created_leagues.all().first()
+        league.members.remove(user)
+
+    return redirect("view-league", username=username, leaguename=leaguename)
