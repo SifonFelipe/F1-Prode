@@ -1,7 +1,9 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
 
 
 urlpatterns = [
-    path('<str:year>', views.global_ranking, name="ranking"),
+    re_path(r'^(?P<year>\d{4})/$', views.global_ranking, name="ranking"), #regular expression to not collide with create-league
+    path('create-league', views.createLeague, name='create-league'),
+    path('league/<str:username>/<str:leaguename>', views.viewLeague, name='view-league'),
 ]

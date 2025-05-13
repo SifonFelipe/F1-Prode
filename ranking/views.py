@@ -1,14 +1,13 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Prefetch
 
-from .models import YearScore
+from .models import YearScore, PrivateLeague
 from predictions.models import GrandPrix
+from accounts.models import CustomUser
+from .forms import PrivateLeagueForm
 
-from datetime import datetime
-from itertools import chain
-
-year = datetime.now().year 
+from itertools import chain 
 
 def global_ranking(request, year):
     year = int(year)
@@ -61,3 +60,36 @@ def global_ranking(request, year):
     }
 
     return render(request, "ranking.html", context)
+
+def createLeague(request):
+    print(request.user)
+
+    if request.method == "POST":
+        form = PrivateLeagueForm(request.POST)
+
+        if form.is_valid():
+            form.save(creator=request.user)
+            return redirect('home')
+        
+    else:
+        form = PrivateLeagueForm()
+
+    return render(request, 'create_league.html', {'form': form})
+
+def viewLeague(request, username, leaguename):
+    creator = (
+        CustomUser.objects
+        .filter(username=username)
+        .prefetch_related(
+            Prefetch(
+                "created_leagues",
+                queryset=PrivateLeague.objects.filter(name=leaguename).prefetch_related("members"),
+            )
+        )
+    ).first()
+
+    league = creator.created_leagues.all().first()
+    members = league.members.all()
+
+    context = {'league': league, 'members': members}
+    return render(request, "view_league.html", context)
