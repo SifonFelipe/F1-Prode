@@ -8,7 +8,7 @@ from datetime import datetime
 year = datetime.now().year
 
 class YearScore(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="season_scores")
     year = models.IntegerField(default=year)
     points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
     position = models.IntegerField(default=0)
@@ -20,7 +20,7 @@ class YearScore(models.Model):
         ordering = ['-points', 'user__username']
 
     def __str__(self):
-        return f"{self.user.username} - {year}"
+        return f"[{self.year}] {self.user}"
 
 class PrivateLeague(models.Model):
     name = models.CharField(max_length=100)

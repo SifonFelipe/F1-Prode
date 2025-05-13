@@ -1,11 +1,304 @@
 {% extends 'main.html' %}
 
 {% block content %}
+<style>
+/* Contenedor principal */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Titillium Web', Arial, sans-serif;
+}
 
-<h1>{{ league.name }}</h1>
+/* Título principal */
+h1 {
+  color: #15151e; /* Color oscuro F1 */
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  text-align: center;
+}
 
-{% for member in members %}
-    <p>{{member.username}}</p>
-{% endfor %}
+/* Subtítulo */
+h2 {
+  color: #15151e; /* Color oscuro F1 */
+  font-size: 22px;
+  font-weight: 600;
+  margin: 30px 0 20px;
+  text-align: center;
+  letter-spacing: 0.5px;
+  clear: both;
+}
 
+/* Alineación central */
+.center {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* Contenedor de botones */
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+/* Botones genéricos */
+button {
+  display: inline-block;
+  margin: 0 5px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Botón para unirse */
+button[onclick*="joinForm"] {
+  background-color: #27a127; /* Verde */
+  color: white;
+}
+
+button[onclick*="joinForm"]:hover {
+  background-color: #1f851f;
+}
+
+/* Botón para abandonar */
+button[onclick*="leaveForm"] {
+  background-color: #e10600; /* Rojo F1 */
+  color: white;
+}
+
+button[onclick*="leaveForm"]:hover {
+  background-color: #c10500;
+}
+
+/* Botones de formulario */
+form button[type="submit"] {
+  background-color: #15151e; /* Color oscuro F1 */
+  color: white;
+}
+
+form button[type="submit"]:hover {
+  background-color: #2a2a3a;
+}
+
+/* Botón No (cancelar) */
+button:not([type="submit"]):not([onclick*="joinForm"]):not([onclick*="leaveForm"]) {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+button:not([type="submit"]):not([onclick*="joinForm"]):not([onclick*="leaveForm"]):hover {
+  background-color: #e0e0e0;
+}
+
+/* Formularios */
+#joinForm, #leaveForm {
+  max-width: 300px;
+  margin: 0 auto 25px;
+  text-align: center;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border: 1px solid #eaeaea;
+  border-radius: 4px;
+}
+
+#joinForm input[type="password"] {
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+#joinForm input[type="password"]:focus {
+  outline: none;
+  border-color: #15151e;
+}
+
+#leaveForm p {
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #333;
+}
+
+#leaveForm .button-container {
+  margin: 15px 0 0;
+}
+
+#leaveForm button {
+  min-width: 80px;
+}
+
+/* Selector de año */
+#yearSelector {
+  display: block;
+  width: 150px;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  text-align: center;
+}
+
+#yearSelector:focus {
+  outline: none;
+  border-color: #e10600;
+}
+
+/* Tabla de puntajes */
+table {
+  width: 70%;
+  max-width: 500px;
+  border-collapse: collapse;
+  margin: 20px auto;
+  background-color: #ffffff;
+  border: 1px solid #eaeaea;
+}
+
+/* Encabezados de tabla */
+thead {
+  background-color: #15151e; /* Color oscuro de F1 */
+}
+
+thead th {
+  padding: 12px 15px;
+  text-align: left;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Datos de la tabla */
+tbody tr {
+  border-bottom: 1px solid #eaeaea;
+  transition: background-color 0.15s ease;
+}
+
+tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+tbody td {
+  padding: 10px 15px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Columna de puntaje */
+tbody td:nth-child(2) {
+  font-weight: 600;
+  text-align: right;
+  color: #e10600;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+  table {
+    width: 90%;
+  }
+  
+  thead th, tbody td {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  #yearSelector {
+    width: 120px;
+  }
+  
+  #joinForm {
+    width: 90%;
+  }
+}
+</style>
+
+{% load home_filters %} <!-- to cleaner floats-->
+
+<div class="container">
+<h1>{{league.name}}</h1>
+
+<div class="button-container">
+  {% if user not in league.members.all %}
+    <button onclick="document.getElementById('joinForm').style.display='block'">Join</button>
+  {% else %}
+    <button onclick="document.getElementById('leaveForm').style.display='block'">Leave</button>
+  {% endif %}
+</div>
+
+{% if user not in league.members.all %}
+  <form id="joinForm" method="POST" action="{% url 'join-league' username=league.creator.username leaguename=league.name %}" style="display: none;">
+    {% csrf_token %}
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit">Join</button>
+  </form>
+{% else %}
+  <form id="leaveForm" method="POST" action="{% url 'leave-league' username=league.creator.username leaguename=league.name %}" style="display: none;">
+    {% csrf_token %}
+    <p>Are you sure that you want to leave "{{league.name}}"?</p>
+    <div class="button-container">
+      <button type="button" onclick="document.getElementById('leaveForm').style.display='none'">No</button>
+      <button type="submit">Yes</button>
+    </div>
+  </form>
+{% endif %}
+
+<h2>Scoring Table</h2>
+
+<div class="center">
+  <select id="yearSelector" onchange="filterByYear()">
+    {% for year in years %}
+      <option value="{{ year }}">{{ year }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Member</th>
+      <th>Score</th>
+    </tr>
+  </thead>
+  <tbody id="scoresTable">
+    {% for member in members %}
+      {% for season_score in member.season_scores.all %}
+        <tr data-year="{{ season_score.year }}">
+          <td>{{ member.username }}</td>
+          <td>{{ season_score.points|clean_float }}</td>
+        </tr>
+      {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<script>
+  const yearSelect = document.getElementById("yearSelector");
+  const rows = document.querySelectorAll("#scoresTable tr");
+
+  function filterByYear(year) {
+    const selectedYear = year || yearSelect.value;
+    rows.forEach(row => {
+      row.style.display = row.dataset.year === selectedYear ? "" : "none";
+    });
+  }
+
+  yearSelect.addEventListener("change", function () {
+    filterByYear(this.value);
+  });
+
+  // Inicializar con el año seleccionado
+  filterByYear();
+</script>
 {% endblock content %}

@@ -6,15 +6,15 @@
 
 <main class="container">
     <section class="hero">
-        <h1>Pronósticos F1</h1>
-        <p>¡Demuestra tus conocimientos de Fórmula 1 y compite contra tus amigos!</p>
+        <h1>F1 Prode</h1>
+        <p>Show off your Formula 1 knowledge and compete against your friends!</p>
     </section>
 
     <section class="next-race">
-        <h2>Próxima Carrera: {{next_gp.name}}</h2>
+        <h2>Next Race: {{next_gp.name}}</h2>
         <div class="race-info">
             <div class="race-details">
-                <p><strong>Fecha:</strong> {{next_gp.date}}</p>
+                <p><strong>Date:</strong> {{next_gp.date}}</p>
             </div>
             <div class="circuit-image">
                 <img src="/api/placeholder/500/300" alt="Circuito de Barcelona-Catalunya">
@@ -23,24 +23,24 @@
     </section>
     
     <section class="prode-section">
-        <h2>¡Haz tu pronóstico para el {{ next_gp.name }}!</h2>
-        <p>¿Crees saber quién ganará la próxima carrera? ¿Quién hará la pole position? ¿Quiénes subirán al podio? Demuestra tus conocimientos y compite con otros fans de la F1 haciendo tu pronóstico.</p>
+        <h2>Make your prediction for the {{ next_gp.name }}!</h2>
+        <p>Think you know who will win the next race? Who will take pole position? Who will finish on the podium? Show off your knowledge and compete with other F1 fans by making your prediction.</p>
         <div class="countdown">
-            Tiempo restante para enviar tu pronóstico: <span id="countdown">...</span>
+            Time remaining to submit your prode: <span id="countdown">...</span>
         </div>
-        <a href="pronostico.html" class="action-btn">Hacer mi pronóstico</a>
+        <a href="pronostico.html" class="action-btn">Make my prode</a>
     </section>
     
     <section class="standings">
-        <h2>Clasificación de Jugadores</h2>
+        <h2>Players Ranking</h2>
         <table class="standings-table">
             <thead>
                 <tr>
                     <th>Pos</th>
-                    <th>Jugador</th>
-                    <th>Puntos</th>
-                    <th>Participaciones</th>
-                    <th>Último Resultado</th>
+                    <th>Player</th>
+                    <th>Points</th>
+                    <th>Participations</th>
+                    <th>Last Result</th>
                 </tr>
             </thead>
             <tbody>
@@ -58,21 +58,21 @@
     </section>
     
     <section class="previous-races">
-        <h2>Carreras Anteriores</h2>
+        <h2>Previous Races</h2>
         <div class="races-grid">
             {% for entry in gps_data %}
             <div class="race-card">
                 <img src="https://media.formula1.com/image/upload/f_auto,c_limit,q_auto,w_1320/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Saudi_Arabia_Circuit" alt="{{ entry.gp.name }}">
                 <div class="race-card-content">
                     <h3>{{ entry.gp.name }}</h3>
-                    <p>Fecha: {{ entry.gp.date }}</p>
+                    <p>Date: {{ entry.gp.date }}</p>
         
                     <p class="winner">
-                        Ganador: {{ entry.winner.first_name }} {{ entry.winner.last_name }}
+                        Winner: {{ entry.winner.first_name }} {{ entry.winner.last_name }}
                     </p>
         
                     <p>
-                        Mejor Pronóstico: 
+                        Best Prode: 
                         {{ entry.best_prediction.user.username }} 
                         ({{ entry.best_prediction.points_scored }} pts)
                     </p>
@@ -87,7 +87,7 @@
     <div class="footer-content">
         <div class="footer-section">
             <h3>F1 Prode</h3>
-            <p>La mejor comunidad de pronósticos de Fórmula 1. Compite con tus amigos y demuestra tus conocimientos.</p>
+            <p>The best Formula 1 prediction community. Compete with your friends and show off your knowledge.</p>
         </div>
         
         <div class="footer-section">
@@ -102,15 +102,15 @@
         </div>
         
         <div class="footer-section">
-            <h3>Contacto</h3>
+            <h3>Contact</h3>
             <p>Email: info@f1prode.com</p>
-            <p>Síguenos en redes sociales:</p>
+            <p>Follow us!</p>
             <p>Instagram | Twitter | Facebook</p>
         </div>
     </div>
     
     <div class="copyright">
-        <p>&copy; 2025 F1 Prode. Todos los derechos reservados.</p>
+        <p>&copy; 2025 F1 Prode. All rights reserved.</p>
     </div>
 </footer>
 </body>
@@ -126,7 +126,7 @@
 
         if (distance <= 0) {
             clearInterval(x);
-            countdownElement.innerHTML = "¡La carrera comenzó!";
+            countdownElement.innerHTML = "The race started!";
             return;
         }
 
