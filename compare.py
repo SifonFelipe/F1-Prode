@@ -1,7 +1,7 @@
 from predictions.models import Session, Result, Prediction, PredictedPosition, PredictedPole, ResultPole
 from ranking.models import YearScore
 
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Count
 
 from datetime import datetime
 from decimal import Decimal
@@ -10,6 +10,7 @@ from F1Prode.static_variables import PRED_POINTS_BY_POSITION, PRED_POLE_POINTS, 
 
 now = datetime.now()
 year = now.year
+users = set()
 
 def update_rankings(year):
     scores = YearScore.objects.filter(year=year).order_by('-points')
@@ -33,6 +34,7 @@ def compare_race_predictions_and_update(session, drivers_positions, SCORE_FORMAT
     updated_preds = []
     updated_ys = []
     updated_pred_pos = []
+    user_set = set()
 
     for prediction in session.predictions.all():
         predicted_positions = prediction.predicted_positions.all()
@@ -46,28 +48,32 @@ def compare_race_predictions_and_update(session, drivers_positions, SCORE_FORMAT
                 
                 updated_pred_pos.append(predicted_position)
 
+        year_score = year_scores_dict[(prediction.user_id, year)]
         if points != 0:
-            year_score = year_scores_dict[(prediction.user_id, year)]
-
             prediction.points_scored += Decimal(str(points))
             year_score.points += Decimal(str(points))
 
             updated_preds.append(prediction)
             updated_ys.append(year_score)
 
+        user_set.add(year_score)
+
     Prediction.objects.bulk_update(updated_preds, ['points_scored'])
     YearScore.objects.bulk_update(updated_ys, ['points'])
     PredictedPosition.objects.bulk_update(updated_pred_pos, ['correct'])
+
+    return user_set
 
 
 def compare_qualy_predictions_and_update(session, pole_result):
     updated_preds = []
     updated_ys = []
     updated_pred_pole = []
+    user_set = set()
 
     for prediction in session.predictions.all():
         pole_pred = prediction.predicted_pole.all().first()
-        
+
         if pole_pred.driver == pole_result.driver:
             year_score = year_scores_dict[(prediction.user_id, year)]
 
@@ -79,9 +85,13 @@ def compare_qualy_predictions_and_update(session, pole_result):
             updated_ys.append(year_score)
             updated_pred_pole.append(pole_pred)
 
+            user_set.add(year_score)
+
     Prediction.objects.bulk_update(updated_preds, ['points_scored'])
     YearScore.objects.bulk_update(updated_ys, ['points'])
     PredictedPole.objects.bulk_update(updated_pred_pole, ['correct'])
+
+    return user_set
 
 sessions_to_compare = (
     Session.objects
@@ -109,7 +119,7 @@ sessions_to_compare = (
     )
 )
 
-
+sessions_to_update = []
 for session in sessions_to_compare:
     session_type = session.session_type
     print(f"\nComparing Results and Predictions of\n{session_type} - {session.grand_prix.name}")
@@ -118,12 +128,39 @@ for session in sessions_to_compare:
         drivers_positions = create_race_results_comparing_list(session)
 
         score_format = PRED_POINTS_BY_POSITION if session_type == "Race" else SPRINT_PRED_POINTS_BY_POSITION
-        compare_race_predictions_and_update(session, drivers_positions, score_format)
+        users_set = compare_race_predictions_and_update(session, drivers_positions, score_format)
+        users = users.union(users_set)
 
     elif session_type == "Qualifying":
         result = session.pole_result.all().first()
-        compare_qualy_predictions_and_update(session, result)
+        users_set = compare_qualy_predictions_and_update(session, result)
+        users = users.union(users_set)
+
+    session.state = "F"
+    sessions_to_update.append(session)
 
     print("Done!")
 
+Session.objects.bulk_update(sessions_to_update, ['state'])
+
 update_rankings(year)
+
+#update gps_participated to have a fast access to them
+predictions_per_year = (
+    Prediction.objects
+    .filter(user__season_scores__in=users, session__grand_prix__year=year)
+    .values("user__season_scores__id", "session__grand_prix__year")
+    .annotate(gp_count=Count('session__grand_prix', distinct=True))
+)
+
+to_update = {
+    pred['user__season_scores__id']: pred['gp_count']
+    for pred in predictions_per_year
+}
+
+scores = YearScore.objects.filter(id__in=to_update.keys())
+
+for score in scores:
+    score.gps_participated = to_update[score.id]
+
+YearScore.objects.bulk_update(scores, ['gps_participated'])

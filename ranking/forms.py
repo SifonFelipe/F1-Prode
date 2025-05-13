@@ -4,7 +4,6 @@ from .models import PrivateLeague
 class PrivateLeagueForm(forms.ModelForm):
     password = forms.CharField(
         label="Password",
-        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
         required=True,
         min_length=6,
         help_text="Password required (min. 6 characters)",
@@ -12,7 +11,6 @@ class PrivateLeagueForm(forms.ModelForm):
 
     password_confirm = forms.CharField(
         label="Confirm Password",
-        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
         required=True,
     )
 

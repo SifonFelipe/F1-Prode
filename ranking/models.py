@@ -12,10 +12,12 @@ class YearScore(models.Model):
     year = models.IntegerField(default=year)
     points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
     position = models.IntegerField(default=0)
+    gps_participated = models.IntegerField(default=0)
 
-    def amount_predictions(self):
-        return Prediction.objects.filter(user=self.user, session__grand_prix__year=self.year).count()
-
+    def amount_gps_participated(self):
+        self.gps_participated = Prediction.objects.filter(user=self.user, session__grand_prix__year=self.year).values('session__grand_prix').distinct().count()
+        self.save()
+    
     class Meta:
         ordering = ['-points', 'user__username']
 
