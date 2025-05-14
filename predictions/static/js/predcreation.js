@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Verificar si el piloto ya está seleccionado
             if (Object.values(selections).includes(driverId)) {
-                alert(`${this.querySelector('.name').textContent} ya está seleccionado`);
+                alert(`${this.querySelector('.name').textContent} is already selected`);
                 return;
             }
             
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Actualizar visualización
                 updateDriversPool();
             } else {
-                alert('No hay posiciones disponibles. Elimina algún piloto antes de agregar uno nuevo.');
+                alert('There are no available positions. Please remove a driver before adding a new one.');
             }
         });
     });
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Verificar si el piloto ya está seleccionado en otra posición
                 for (const pos in selections) {
                     if (selections[pos] == driverId) {
-                        alert(`${driverCard.querySelector('.name').textContent} ya está seleccionado en la posición ${pos}`);
+                        alert(`${driverCard.querySelector('.name').textContent} is already selected at position ${pos}`);
                         return;
                     }
                 }
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
             positionSlotContent.innerHTML = '';
             const emptySlotMsg = document.createElement('div');
             emptySlotMsg.className = 'empty-slot-msg';
-            emptySlotMsg.textContent = 'Arrastra un piloto aquí';
+            emptySlotMsg.textContent = 'Drag a driver here';
             positionSlotContent.appendChild(emptySlotMsg);
             
             positionSlot.classList.remove('filled');
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Botón para reiniciar el pronóstico
     document.getElementById('resetBtn').addEventListener('click', function() {
-        if (confirm('¿Estás seguro de querer reiniciar tu pronóstico?')) {
+        if (confirm('Are you sure you want to reset your Prode?')) {
             // Limpiar todas las selecciones
             for (const position in selections) {
                 delete selections[position];
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 positionSlotContent.innerHTML = '';
                 const emptySlotMsg = document.createElement('div');
                 emptySlotMsg.className = 'empty-slot-msg';
-                emptySlotMsg.textContent = 'Arrastra un piloto aquí';
+                emptySlotMsg.textContent = 'Drag a driver here';
                 positionSlotContent.appendChild(emptySlotMsg);
                 
                 slot.classList.remove('filled');
@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const positions = document.querySelectorAll('.position-slot').length;
         
         if (totalPositions < positions) {
-            alert(`¡Faltan posiciones por completar! Has seleccionado ${totalPositions} de ${positions} pilotos.`);
+            alert(`There are still positions to be filled! You have selected ${totalPositions} of ${positions} drivers.`);
             return;
         }
         
@@ -241,14 +241,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('¡Pronóstico guardado con éxito!');
+                alert('Prode saved successfully!');
             } else {
-                alert('Error al guardar el pronóstico: ' + data.error);
+                alert('Error saving Prode: ' + data.error);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error al guardar el pronóstico. Por favor, intenta nuevamente.');
+            alert('Error saving Prode. Please try again.');
         });
     });
 
@@ -256,8 +256,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateCountdown() {
         const countdownEl = document.getElementById('countdown');
 
-        if (countdownEl.textContent == "¡Tiempo finalizado!") {
-            countdownEl.textContent = "¡Tiempo finalizado!";
+        if (countdownEl.textContent == "Lights out!") {
+            countdownEl.textContent = "Lights out!";
             countdownEl.style.color = "var(--f1-red)";
             const actionsDiv = document.querySelector(`.actions`);
             // Limpiar el contenido actual
@@ -278,8 +278,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 hours--;
                 
                 if (hours < 0) {
-                    countdownEl.textContent = "¡Tiempo finalizado!";
-                    alert("¡El tiempo ha terminado!");
+                    countdownEl.textContent = "Lights out!";
+                    alert("Lights out!");
                     countdownEl.style.color = "var(--f1-red)";
                     const actionsDiv = document.querySelector(`.actions`);
                     // Limpiar el contenido actual

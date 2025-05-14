@@ -1,7 +1,8 @@
 {% extends 'main.html' %} {% block content %}
 {% load custom_filters %}
+
 <div class="prode-container" style="margin-top:15px;">
-    <h1 class="prode-title">Armá tu Prode acá</h1>
+    <h1 class="prode-title">Make your Prode here!</h1>
     
     <!-- Datos ocultos para JavaScript -->
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -9,14 +10,15 @@
     <form id="prediction-form" data-save-url="{% url 'save_pred' %}"></form>
     
     <div class="race-info">
-        <h3>{{ gp.name }} - {{ gp.location }}</h3>
-        <div class="countdown">Tiempo restante para enviar tu pronóstico: <span id="countdown">{{ remaining_time }}</span></div>
+        <h3>{{ gp.name }} - {{ gp.location }} - {{session.session_type}}</h3>
+        <div class="countdown">Remaining Time: <span id="countdown">{{ remaining_time }}</span></div>
     </div>
     
+
     <div class="prode-system">
         <!-- Pool de pilotos -->
         <div class="drivers-pool">
-            <h3>Pilotos Disponibles</h3>
+            <h3>Drivers Available</h3>
             <div class="drivers-grid" id="driversPool">
                 {% for driver in drivers %}
                 <div class="driver-card {{ ABB|get:driver.team_name }}" draggable="true" data-driver-id="{{ driver.id }}">
@@ -32,38 +34,37 @@
         
         <!-- Selección de posiciones -->
         <div class="prode-selection">
-            <h3>Tu Pronóstico</h3>
+            <h3>Your Prode</h3>
             <div class="positions-grid" id="positionsGrid">
-                {% for i in positions_range %}
-                <div class="position-slot position-{{ i }}" data-position="{{ i }}">
-                    <div class="position-number">{{ i }}</div>
+                {% if session.session_type != "Qualifying" %}
+                {% for pos, points in POINTS.items %}
+                <div class="position-slot position-{{ pos }}" data-position="{{ pos }}">
+                    <div class="position-number">{{ pos }}</div>
                     <div class="position-points">
-                        {% if i == 1 %}
-                            <span class="points-badge">5 pts</span>
-                        {% elif i == 2 %}
-                            <span class="points-badge">3 pts</span>
-                        {% elif i == 3 %}
-                            <span class="points-badge">2 pts</span>
-                        {% elif i <= 10 %}
-                            <span class="points-badge">1 pt</span>
-                        {% elif i <= 15 %}
-                            <span class="points-badge">0.5 pts</span>
-                        {% else %}
-                            <span class="points-badge">0.25 pts</span>
-                        {% endif %}
+                        <span class="points-badge">{{points}} pts</span>
                     </div>
                     <div class="position-slot-content">
-                        <div class="empty-slot-msg">Arrastra un piloto aquí</div>
+                        <div class="empty-slot-msg">Drag a driver here</div>
                     </div>
                 </div>
                 {% endfor %}
+                {% else %}
+                <div class="position-slot position-1" data-position="1" style="min-height: 200px">
+                    <div class="position-number">1</div>
+                    <div class="position-points">
+                        <span class="points-badge">4 pts</span>
+                    </div>
+                    <div class="position-slot-content">
+                        <div class="empty-slot-msg">Drag a driver here</div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
-    
     <div class="actions">
-        <button class="action-btn secondary" id="resetBtn">Reiniciar</button>
-        <button class="action-btn" id="saveBtn">Guardar Pronóstico</button>
+        <button class="action-btn secondary" id="resetBtn">Reset</button>
+        <button class="action-btn" id="saveBtn">Save Prode</button>
     </div>
 </div>
 

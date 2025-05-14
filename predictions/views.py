@@ -6,10 +6,10 @@ from datetime import datetime, timezone, timedelta
 
 import json
 
-from F1Prode.static_variables import DRIVERS_BY_RACE, FNAME_TO_CLASS, PRED_POINTS_BY_POSITION
+from F1Prode.static_variables import DRIVERS_BY_RACE, FNAME_TO_CLASS, PRED_POINTS_BY_POSITION, CURRENT_SEASON, SPRINT_PRED_POINTS_BY_POSITION
 from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result, PredictedPole, ResultPole
 
-def createPred(request, year, location, session_type):
+def createPred(request, season, location, session_type):
     location.capitalize()
     session_type.capitalize()
 
@@ -18,25 +18,30 @@ def createPred(request, year, location, session_type):
     # so you will get session.lineup (for example) to drivers
     gp = (
         GrandPrix.objects
-        .filter(year=year, location=location)
+        .filter(season=season, location=location)
         .prefetch_related(
             Prefetch(
                 'sessions',  # related_name
-                queryset=Session.objects.filter(session_type=session_type, grand_prix__location=location, grand_prix__year=year),
+                queryset=Session.objects.filter(session_type=session_type),
                 to_attr='session'
             )
         )
     ).first()
 
-    drivers = Driver.objects.filter(year=year)[:DRIVERS_BY_RACE]
+    drivers = Driver.objects.filter(season=season)[:DRIVERS_BY_RACE]
     position_range = [x for x in range(1, DRIVERS_BY_RACE+1)]
     session = gp.session[0]
+
+    if session.session_type == "Race":
+        points_system = PRED_POINTS_BY_POSITION
+    else:
+        points_system = SPRINT_PRED_POINTS_BY_POSITION
 
     now = datetime.now(timezone.utc)
     remaining = session.session_date - now
 
     if remaining < timedelta(0):
-        remaining_time = "¡Tiempo finalizado!"
+        remaining_time = "Lights out!"
     else:
         amount_seconds = int(remaining.total_seconds())
 
@@ -46,18 +51,15 @@ def createPred(request, year, location, session_type):
         remaining_time = f"{hours:02}:{minutes:02}:{seconds:02}"
 
     context = {'drivers': drivers, 'positions_range': position_range, "ABB": FNAME_TO_CLASS, "gp": gp, 
-               "session": session, "remaining_time": remaining_time}
-    
-    if session_type == "Qualifying":
-        return render(request, "pole_predicts.html", context)
+               "session": session, "remaining_time": remaining_time, "POINTS": points_system}
 
     return render(request, "predicts.html", context)
 
-def compare_results(request, user, year, location, session_type):
+def compare_results(request, user, season, location, session_type):
     
     session = (
         Session.objects
-        .filter(grand_prix__location=location, grand_prix__year=int(year), session_type=session_type)
+        .filter(grand_prix__location=location, grand_prix__season=season, session_type=session_type)
         .select_related('grand_prix')
         .prefetch_related(
             Prefetch(

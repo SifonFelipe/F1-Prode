@@ -3,13 +3,11 @@ from django.db import models
 from accounts.models import CustomUser
 from predictions.models import Prediction
 
-from datetime import datetime
-
-year = datetime.now().year
+from F1Prode.static_variables import CURRENT_SEASON
 
 class YearScore(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="season_scores")
-    year = models.IntegerField(default=year)
+    season = models.IntegerField(default=CURRENT_SEASON)
     points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
     position = models.IntegerField(default=0)
     gps_participated = models.IntegerField(default=0)

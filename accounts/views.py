@@ -7,16 +7,15 @@ from predictions.models import Prediction, GrandPrix
 
 from datetime import datetime
 
-year = datetime.now().year
+from F1Prode.static_variables import CURRENT_SEASON as season
 
 from django.shortcuts import get_object_or_404
 
 def profile(request, username):
     profile_user = get_object_or_404(CustomUser, username=username)
-    year = datetime.now().year
 
     scores = list(YearScore.objects.filter(user=profile_user))
-    score_actual_year = next((s for s in scores if s.year == year), None)
+    score_actual_year = next((s for s in scores if s.season == season), None)
     best_season = scores[0] if scores else None
 
     predictions = list(
@@ -29,7 +28,7 @@ def profile(request, username):
     best_score = predictions[0] if predictions else None
     season_predictions = [
         p for p in predictions
-        if p.session.grand_prix.year == year and p.session.session_type == "Race"
+        if p.session.grand_prix.season == season and p.session.session_type == "Race"
     ]
     
     best_season_score = max(season_predictions, key=lambda p: p.points_scored, default=None)
@@ -51,14 +50,13 @@ def profile(request, username):
 
     races_counts = (
         GrandPrix.objects
-        .filter(year=year)
+        .filter(season=season)
         .aggregate(
             total_races=Count('id'),
             races_completed=Count('id', filter=Q(ended=True))
         )
     )
 
-    
     gps = races_counts['total_races']
     gps_ended = races_counts['races_completed']
 
