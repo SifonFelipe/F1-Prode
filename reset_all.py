@@ -3,25 +3,39 @@ from ranking.models import YearScore
 
 from datetime import datetime, date, timedelta
 
-year = datetime.today().year
+from F1Prode.static_variables import CURRENT_SEASON
 
-grand_prixs = GrandPrix.objects.filter(date__range=(date(year, 1, 1), date.today() + timedelta(days=1)))
-grand_prixs.update(ended=False)
+grand_prixs = GrandPrix.objects.filter(date__range=(date(CURRENT_SEASON, 1, 1), date.today() + timedelta(days=1)))
 
-Driver.objects.filter(year=year).update(points=0)
-RacingTeam.objects.filter(year=year).update(points=0)
-YearScore.objects.filter(year=year).update(points=0)
+reset_sessions_to_fwc = True if str(input("Reset sessions to FWC? [Y/n]")).lower() == "y" else False
 
-for gp in grand_prixs:
-    sessions = Session.objects.filter(grand_prix=gp)
-    sessions.update(state="NF")
+if reset_sessions_to_fwc:
+    #change state and reset predictions scores
+    YearScore.objects.filter(season=CURRENT_SEASON).update(points=0)
 
-    for session in sessions:
-        Result.objects.filter(session=session).delete()
-        ResultPole.objects.filter(session=session).delete()
-
-        predictions = Prediction.objects.filter(session=session)
+    for gp in grand_prixs:
+        sessions = Session.objects.filter(grand_prix=gp)
+        sessions.update(state="FWC")
+        predictions = Prediction.objects.filter(session__in=sessions)
         predictions.update(points_scored=0)
+        PredictedPosition.objects.filter(prediction__in=predictions).update(correct=False)
+        PredictedPole.objects.filter(prediction__in=predictions).update(correct=False)
 
+reset_all = True if str(input("Reset all? [Y/n]")).lower() == "y" else False
+
+if reset_all:
+    grand_prixs.update(ended=False)
+    Driver.objects.filter(season=CURRENT_SEASON).update(points=0)
+    RacingTeam.objects.filter(season=CURRENT_SEASON).update(points=0)
+    YearScore.objects.filter(season=CURRENT_SEASON).update(points=0)
+
+    for gp in grand_prixs:
+        sessions = Session.objects.filter(grand_prix=gp)
+        sessions.update(state="NF")
+        Result.objects.filter(session__in=sessions).delete()
+        ResultPole.objects.filter(session__in=sessions).delete()
+
+        predictions = Prediction.objects.filter(session__in=sessions)
+        predictions.update(points_scored=0)
         PredictedPosition.objects.filter(prediction__in=predictions).update(correct=False)
         PredictedPole.objects.filter(prediction__in=predictions).update(correct=False)

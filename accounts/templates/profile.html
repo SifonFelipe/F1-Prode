@@ -479,7 +479,7 @@
                 <div class="stats-box">
                     <h4>Mejor Puntaje</h4>
                     <div class="stats-value">{{ best_score.points_scored }}</div>
-                    <div class="stats-subtitle">{{ best_score.session.grand_prix.location }} - {{best_score.session.grand_prix.year}}</div>
+                    <div class="stats-subtitle">{{ best_score.session.grand_prix.location }} - {{best_score.session.grand_prix.season}}</div>
                 </div>
                 <div class="stats-box">
                     <h4>Posiciones Acertadas</h4>
@@ -488,7 +488,7 @@
                 <div class="stats-box">
                     <h4>Mejor Resultado</h4>
                     <div class="stats-value">{{ best_season.position }}°</div>
-                    <div class="stats-subtitle">Temporada {{ best_season.year }}</div>
+                    <div class="stats-subtitle">Temporada {{ best_season.season }}</div>
                 </div>
                 <div class="stats-box">
                     <h4>Promedio por Carrera</h4>
@@ -503,7 +503,7 @@
         
         <div class="season-performance">
             <div class="season-header">
-                <div class="season-title">Temporada {{ score.year }}</div>
+                <div class="season-title">Temporada {{ score.season }}</div>
                 <div class="season-badge">{% if percentage_season < 100 %}En progreso{% else %}Terminada{% endif %}</div>
             </div>
             <div class="progress-bar">
@@ -521,7 +521,7 @@
                 <div class="stats-box">
                     <h4>Mejor Puntaje</h4>
                     <div class="stats-value">{{ best_season_score.points_scored }}</div>
-                    <div class="stats-subtitle">{{ best_season_score.session.grand_prix.location }} - {{best_season_score.session.grand_prix.year}}</div>
+                    <div class="stats-subtitle">{{ best_season_score.session.grand_prix.location }} - {{best_season_score.session.grand_prix.season}}</div>
                 </div>
                 <div class="stats-box">
                     <h4>Participación</h4>

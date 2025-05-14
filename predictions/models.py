@@ -2,22 +2,22 @@ from django.db import models
 from django.conf import settings
 from datetime import datetime
 
-year = datetime.now().year
+from F1Prode.static_variables import CURRENT_SEASON
 
 class RacingTeam(models.Model):
     name = models.CharField(max_length=100)
-    year = models.IntegerField(default=year)
+    season = models.IntegerField(default=CURRENT_SEASON)
     points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
 
     def __str__(self):
-        return f"[{self.year}] {self.name}"
+        return f"[{self.season}] {self.name}"
 class Driver(models.Model):
     """
     Drivers model.
     A driver for year.
     """
     
-    year = models.IntegerField(default=datetime.now().year)
+    season = models.IntegerField(default=CURRENT_SEASON)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     number = models.IntegerField()
@@ -31,7 +31,7 @@ class Driver(models.Model):
         ordering = ["-points", "number"]
 
     def __str__(self):
-        return f"[{self.year}] {self.first_name} {self.last_name} ( {self.number} )"
+        return f"[{self.season}] {self.first_name} {self.last_name} ( {self.number} )"
     
 class GrandPrix(models.Model):
     """
@@ -48,7 +48,7 @@ class GrandPrix(models.Model):
     country = models.CharField(max_length=100)
     date = models.DateField()
     n_round = models.IntegerField(unique=True, null=True)
-    year = models.IntegerField()
+    season = models.IntegerField(default=CURRENT_SEASON)
     event_format = models.CharField(max_length=50, choices=EVENT_TYPES, default="testing")
     ended = models.BooleanField(default=False)
 
@@ -59,7 +59,7 @@ class GrandPrix(models.Model):
         ]
 
     def __str__(self):
-        return f"[{self.year}] {self.name} - {"Ended" if self.ended else "Not Ended"}"
+        return f"[{self.season}] {self.name} - {"Ended" if self.ended else "Not Ended"}"
     
 class Session(models.Model):
     """
@@ -87,7 +87,7 @@ class Session(models.Model):
     state = models.CharField(max_length=50, choices=STATES, default="NF")
 
     def __str__(self):
-        return f"[{self.grand_prix.year} - {self.grand_prix.name}] {self.session_type} - {self.state}"
+        return f"[{self.grand_prix.season} - {self.grand_prix.name}] {self.session_type} - {self.state}"
     
 class Prediction(models.Model):
     """
@@ -108,7 +108,7 @@ class Prediction(models.Model):
         ]
 
     def __str__(self):
-        return f"[{self.session.grand_prix.year} - {self.session.grand_prix.name}] Prediction by {self.user.username} for {self.session.session_type}" 
+        return f"[{self.session.grand_prix.season} - {self.session.grand_prix.name}] Prediction by {self.user.username} for {self.session.session_type}" 
 
 class PredictedPosition(models.Model):
     """
@@ -130,7 +130,7 @@ class PredictedPosition(models.Model):
         ordering = ["position"]
 
     def __str__(self):
-        return f"[{self.prediction.session.grand_prix.year} - {self.prediction.session.grand_prix.name} - {self.prediction.session.session_type}] {self.position} - {self.driver.last_name}"
+        return f"[{self.prediction.session.grand_prix.season} - {self.prediction.session.grand_prix.name} - {self.prediction.session.session_type}] {self.position} - {self.driver.last_name}"
     
 class PredictedPole(models.Model):
     prediction = models.ForeignKey(Prediction, on_delete=models.CASCADE, related_name='predicted_pole')
@@ -143,7 +143,7 @@ class PredictedPole(models.Model):
         ]
 
     def __str__(self):
-        return f"[{self.prediction.session.grand_prix.year} - {self.prediction.session.grand_prix.name} - {self.prediction.session.session_type}] POLE - {self.driver.last_name}"
+        return f"[{self.prediction.session.grand_prix.season} - {self.prediction.session.grand_prix.name} - {self.prediction.session.session_type}] POLE - {self.driver.last_name}"
 
 class Result(models.Model):
     """
@@ -168,7 +168,7 @@ class Result(models.Model):
         ordering = ["position"]
 
     def __str__(self):
-        return f"[{self.session.grand_prix.year} - {self.session.grand_prix.name} - {self.session.session_type}] {self.position} - {self.driver.last_name}"
+        return f"[{self.session.grand_prix.season} - {self.session.grand_prix.name} - {self.session.session_type}] {self.position} - {self.driver.last_name}"
     
 class ResultPole(models.Model):
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
@@ -177,4 +177,4 @@ class ResultPole(models.Model):
     for_which_team = models.ForeignKey(RacingTeam, on_delete=models.DO_NOTHING, null=True, blank=True)
 
     def __str__(self):
-        return f"[{self.session.grand_prix.year} - {self.session.grand_prix.name} - {self.session.session_type}] POLE - {self.driver.last_name}"
+        return f"[{self.session.grand_prix.season} - {self.session.grand_prix.name} - {self.session.session_type}] POLE - {self.driver.last_name}"

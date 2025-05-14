@@ -3,6 +3,7 @@ from django.db.models import Prefetch
 
 from predictions.models import Driver, GrandPrix, Session, Prediction, Result
 from ranking.models import YearScore
+from F1Prode.static_variables import CURRENT_SEASON
 
 import requests
 from datetime import datetime
@@ -14,17 +15,17 @@ def home(request):
     Next feature --> add models apart of each circuit with extra data.
     """
 
-    next_gp = GrandPrix.objects.filter(year=2025, ended=False).select_related(None).first()
+    next_gp = GrandPrix.objects.filter(season=CURRENT_SEASON, ended=False).select_related(None).first()
     next_race = (
         Session.objects
         .select_related('grand_prix')
         .get(grand_prix=next_gp, session_type="Race")
-    ) 
+    )
     countdown_target_race = next_race.session_date
 
     prev_gps = (
         GrandPrix.objects
-        .filter(year=year, ended=True)
+        .filter(season=CURRENT_SEASON, ended=True)
         .order_by("-date")
         .prefetch_related(
             Prefetch(
@@ -59,7 +60,7 @@ def home(request):
 
     ranking = (
         YearScore.objects
-        .filter(year=year)
+        .filter(season=CURRENT_SEASON)
         .select_related("user")
         .prefetch_related(
             Prefetch(

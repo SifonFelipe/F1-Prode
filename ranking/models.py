@@ -3,26 +3,25 @@ from django.db import models
 from accounts.models import CustomUser
 from predictions.models import Prediction
 
-from datetime import datetime
-
-year = datetime.now().year
+from F1Prode.static_variables import CURRENT_SEASON
 
 class YearScore(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="season_scores")
-    year = models.IntegerField(default=year)
+    season = models.IntegerField(default=CURRENT_SEASON)
     points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
     position = models.IntegerField(default=0)
     gps_participated = models.IntegerField(default=0)
 
+    """
     def amount_gps_participated(self):
-        self.gps_participated = Prediction.objects.filter(user=self.user, session__grand_prix__year=self.year).values('session__grand_prix').distinct().count()
+        self.gps_participated = Prediction.objects.filter(user=self.user, session__grand_prix__season=self.season).values('session__grand_prix').distinct().count()
         self.save()
-    
+    """
     class Meta:
         ordering = ['-points', 'user__username']
 
     def __str__(self):
-        return f"[{self.year}] {self.user}"
+        return f"[{self.season}] {self.user}"
 
 class PrivateLeague(models.Model):
     name = models.CharField(max_length=100)

@@ -8,9 +8,9 @@ from predictions.models import GrandPrix, Session
 logging.getLogger('fastf1').setLevel(logging.CRITICAL)
 
 #refresh within a year
-year = datetime.date.today().year
+season = int(input("Enter season you want to download"))
 
-schedule = fastf1.get_event_schedule(year) #schedule with all the gp's information
+schedule = fastf1.get_event_schedule(season) #schedule with all the gp's information
 
 #depending on the format of the gp
 conventional = ["Practice 1", "Practice 2", "Practice 3", "Qualifying", "Race"]
@@ -26,7 +26,7 @@ for _, row in schedule.iterrows():
                 "date": row["EventDate"],
                 "n_round": row["RoundNumber"],
                 "event_format": row["EventFormat"],
-                "year": year,
+                "season": season,
             }
         )
 
@@ -43,6 +43,6 @@ for _, row in schedule.iterrows():
                     session_type=session,
                 )
 
-            print(f"{gp.name} agregado")
+            print(f"{gp.name} added.")
         else:
-            print(f"{gp.name} ya existia")
+            print(f"{gp.name} already existed on db.")
