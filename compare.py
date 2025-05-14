@@ -6,14 +6,12 @@ from django.db.models import Prefetch, Count
 from datetime import datetime
 from decimal import Decimal
 
-from F1Prode.static_variables import PRED_POINTS_BY_POSITION, PRED_POLE_POINTS, SPRINT_PRED_POINTS_BY_POSITION
+from F1Prode.static_variables import PRED_POINTS_BY_POSITION, PRED_POLE_POINTS, SPRINT_PRED_POINTS_BY_POSITION, CURRENT_SEASON
 
-now = datetime.now()
-year = now.year
 users = set()
 
-def update_rankings(year):
-    scores = YearScore.objects.filter(year=year).order_by('-points')
+def update_rankings(season):
+    scores = YearScore.objects.filter(season=season).order_by('-points')
     for i, score in enumerate(scores, start=1):
         score.position = i
         score.save()
@@ -27,8 +25,8 @@ def create_race_results_comparing_list(session):
     return drivers_positions
 
 
-yearscores = YearScore.objects.filter(year=year)
-year_scores_dict = {(ys.user_id, ys.year): ys for ys in yearscores}
+yearscores = YearScore.objects.filter(season=CURRENT_SEASON)
+year_scores_dict = {(ys.user_id, ys.season): ys for ys in yearscores}
 
 def compare_race_predictions_and_update(session, drivers_positions, SCORE_FORMAT):
     updated_preds = []
@@ -48,7 +46,7 @@ def compare_race_predictions_and_update(session, drivers_positions, SCORE_FORMAT
                 
                 updated_pred_pos.append(predicted_position)
 
-        year_score = year_scores_dict[(prediction.user_id, year)]
+        year_score = year_scores_dict[(prediction.user_id, CURRENT_SEASON)]
         if points != 0:
             prediction.points_scored += Decimal(str(points))
             year_score.points += Decimal(str(points))
@@ -75,7 +73,7 @@ def compare_qualy_predictions_and_update(session, pole_result):
         pole_pred = prediction.predicted_pole.all().first()
 
         if pole_pred.driver == pole_result.driver:
-            year_score = year_scores_dict[(prediction.user_id, year)]
+            year_score = year_scores_dict[(prediction.user_id, CURRENT_SEASON)]
 
             prediction.points_scored += PRED_POLE_POINTS
             year_score.points += PRED_POLE_POINTS
@@ -143,19 +141,19 @@ for session in sessions_to_compare:
 
 Session.objects.bulk_update(sessions_to_update, ['state'])
 
-update_rankings(year)
+update_rankings(CURRENT_SEASON)
 
 #update gps_participated to have a fast access to them
-predictions_per_year = (
+predictions_per_season = (
     Prediction.objects
-    .filter(user__season_scores__in=users, session__grand_prix__year=year)
-    .values("user__season_scores__id", "session__grand_prix__year")
+    .filter(user__season_scores__in=users, session__grand_prix__season=CURRENT_SEASON)
+    .values("user__season_scores__id", "session__grand_prix__season")
     .annotate(gp_count=Count('session__grand_prix', distinct=True))
 )
 
 to_update = {
     pred['user__season_scores__id']: pred['gp_count']
-    for pred in predictions_per_year
+    for pred in predictions_per_season
 }
 
 scores = YearScore.objects.filter(id__in=to_update.keys())

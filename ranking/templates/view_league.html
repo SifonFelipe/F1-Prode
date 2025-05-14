@@ -257,8 +257,8 @@ tbody td:nth-child(2) {
 
 <div class="center">
   <select id="yearSelector" onchange="filterByYear()">
-    {% for year in years %}
-      <option value="{{ year }}">{{ year }}</option>
+    {% for season in seasons %}
+      <option value="{{ season }}">{{ season }}</option>
     {% endfor %}
   </select>
 </div>
@@ -273,7 +273,7 @@ tbody td:nth-child(2) {
   <tbody id="scoresTable">
     {% for member in members %}
       {% for season_score in member.season_scores.all %}
-        <tr data-year="{{ season_score.year }}">
+        <tr data-year="{{ season_score.season }}">
           <td>{{ member.username }}</td>
           <td>{{ season_score.points|clean_float }}</td>
         </tr>

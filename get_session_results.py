@@ -2,15 +2,17 @@ from predictions.models import GrandPrix, Session, Result, Driver, RacingTeam, R
 
 from datetime import datetime, timedelta, date
 
+from F1Prode.static_variables import CURRENT_SEASON
+
 import fastf1
 import logging
 
 #disable log for fastf1
 logging.getLogger('fastf1').setLevel(logging.CRITICAL)
 
-def get_driver_and_team(row, year):
-    driver = Driver.objects.get(number=row["DriverNumber"], last_name=row["LastName"], year=year)
-    team = RacingTeam.objects.get(name=row["TeamName"], year=year)
+def get_driver_and_team(row, season):
+    driver = Driver.objects.get(number=row["DriverNumber"], last_name=row["LastName"], season=season)
+    team = RacingTeam.objects.get(name=row["TeamName"], season=season)
     return driver, team
 
 def get_driver_best_lap(session_data, driver):
@@ -24,16 +26,16 @@ def get_driver_best_lap(session_data, driver):
     print(f"{driver.last_name} didn't complete a lap!")
     return None
 
-def get_session_and_load(gp, session_type, year):
+def get_session_and_load(gp, session_type, season):
     print(f"Fetching {session_type} Results... (This may take some time)")
 
     session = Session.objects.get(grand_prix=gp, session_type=session_type)
-    session_data = fastf1.get_session(year, gp.location, session_type)
+    session_data = fastf1.get_session(season, gp.location, session_type)
     session_data.load()
 
     return session, session_data
 
-def process_race_results(session_data, session, year):
+def process_race_results(session_data, session, season):
     fastest_lap = session_data.laps.pick_fastest()
     fastest_driver_n = fastest_lap["DriverNumber"]
     result_dict = {}
@@ -42,7 +44,7 @@ def process_race_results(session_data, session, year):
     teams = []
 
     for _, row in session_data.results.iterrows():
-        driver, team = get_driver_and_team(row, year) #slow query
+        driver, team = get_driver_and_team(row, season) #slow query TODO
         laps_count = (session_data.laps["DriverNumber"] == row["DriverNumber"]).sum()
         best_lap_time = get_driver_best_lap(session_data, driver)
         
@@ -73,12 +75,12 @@ def process_race_results(session_data, session, year):
     print("Done!\n")
     return result_dict
 
-def process_qualifying_results(session_data, session, year):
+def process_qualifying_results(session_data, session, season):
     print(f"Processing Qualifying Results...")
 
     for _, row in session_data.results.iterrows():
         if row["Position"] == 1 or row["Position"] == "1":
-            driver, team = get_driver_and_team(row, year)
+            driver, team = get_driver_and_team(row, season)
             ResultPole.objects.create(
                 driver=driver,
                 session=session,
@@ -93,7 +95,7 @@ def process_qualifying_results(session_data, session, year):
 now = datetime.now()
 year = now.year
 
-grand_prixs = list(GrandPrix.objects.filter(date__range=(date(year, 1, 1), date.today() + timedelta(hours=12)), ended=False))
+grand_prixs = list(GrandPrix.objects.filter(date__range=(date(CURRENT_SEASON, 1, 1), date.today() + timedelta(hours=12)), ended=False))
 
 for gp in grand_prixs:
     print(f"Getting and Comparing data from {gp.name}")
@@ -105,19 +107,19 @@ for gp in grand_prixs:
         sessions_to_fetch.insert(0, "Sprint")
 
     for session_type in sessions_to_fetch:
-        session, session_data = get_session_and_load(gp, session_type, year)
+        session, session_data = get_session_and_load(gp, session_type, CURRENT_SEASON)
 
         if not session_data.results.empty:
             if session_type == "Race":
                 print(f"Processing Race Results...")
-                result_dict = process_race_results(session_data, session, year)
+                result_dict = process_race_results(session_data, session, CURRENT_SEASON)
 
             elif session_type == "Qualifying":
-                process_qualifying_results(session_data, session, year)
+                process_qualifying_results(session_data, session, CURRENT_SEASON)
 
             elif session_type == "Sprint":
                 print(f"Processing Sprint Race Results...")
-                result_dict = process_race_results(session_data, session, year)
+                result_dict = process_race_results(session_data, session, CURRENT_SEASON)
 
             session.state = "FWC" #Finished, Waiting Compare
             session.save()

@@ -12,15 +12,16 @@ class YearScore(models.Model):
     position = models.IntegerField(default=0)
     gps_participated = models.IntegerField(default=0)
 
+    """
     def amount_gps_participated(self):
-        self.gps_participated = Prediction.objects.filter(user=self.user, session__grand_prix__year=self.year).values('session__grand_prix').distinct().count()
+        self.gps_participated = Prediction.objects.filter(user=self.user, session__grand_prix__season=self.season).values('session__grand_prix').distinct().count()
         self.save()
-    
+    """
     class Meta:
         ordering = ['-points', 'user__username']
 
     def __str__(self):
-        return f"[{self.year}] {self.user}"
+        return f"[{self.season}] {self.user}"
 
 class PrivateLeague(models.Model):
     name = models.CharField(max_length=100)

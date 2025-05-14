@@ -8,19 +8,20 @@ from predictions.models import GrandPrix
 from accounts.models import CustomUser
 from .forms import PrivateLeagueForm
 
+from F1Prode.static_variables import CURRENT_SEASON
+
 from itertools import chain 
 
-def global_ranking(request, year):
-    year = int(year)
+def global_ranking(request, season):
     filter_mode = request.GET.get('filter', 'all')
     user = request.user
 
     if filter_mode == 'friends' and user.is_authenticated:
         friend_ids = user.friends.values_list('id', flat=True) #friends ids
 
-        scores_qs = YearScore.objects.filter(user__in=friend_ids, year=year).select_related('user') #scores and user data
+        scores_qs = YearScore.objects.filter(user__in=friend_ids, season=season).select_related('user') #scores and user data
 
-        my_score = YearScore.objects.filter(user=user, year=year).select_related('user').first()
+        my_score = YearScore.objects.filter(user=user, season=season).select_related('user').first()
 
         if my_score and my_score.user_id not in friend_ids:
             scores = list(chain([my_score], scores_qs))
@@ -30,7 +31,7 @@ def global_ranking(request, year):
         scores = sorted(scores, key=lambda x: x.points, reverse=True) #order_by but in a list
         user_score = my_score
     else:
-        scores_qs = YearScore.objects.filter(year=year).select_related('user').order_by('-points') #all the results
+        scores_qs = YearScore.objects.filter(season=season).select_related('user').order_by('-points') #all the results
         scores = list(scores_qs)
 
         user_score = next((s for s in scores if s.user_id == user.id), None)
@@ -42,7 +43,7 @@ def global_ranking(request, year):
     # in a single query get finished and not finished gps
     races_counts = (
         GrandPrix.objects
-        .filter(year=year)
+        .filter(season=season)
         .aggregate(
             total_races=Count('id'),
             races_completed=Count('id', filter=Q(ended=True))
@@ -51,7 +52,7 @@ def global_ranking(request, year):
 
     context = {
         "scores": scores,
-        "year": year,
+        "season": season,
         "races_completed": races_counts['races_completed'],
         "total_races": races_counts['total_races'],
         "amount_users": len(scores),
@@ -92,14 +93,14 @@ def viewLeague(request, username, leaguename):
     league = creator.created_leagues.all().first()
     members = league.members.all()
 
-    all_years = set()
+    all_seasons = set()
     for member in members:
         for score in member.season_scores.all():
-            all_years.add(score.year)
+            all_seasons.add(score.season)
 
-    years = sorted(all_years, reverse=True)
+    seasons = sorted(all_seasons, reverse=True)
 
-    context = {'league': league, 'members': members, 'years': years}
+    context = {'league': league, 'members': members, 'seasons': seasons}
     return render(request, "view_league.html", context)
 
 
@@ -123,9 +124,9 @@ def join_league(request, username, leaguename):
 
         if league.check_password(password):
             league.members.add(user)
-            messages.success(request, "Te uniste correctamente.")
+            messages.success(request, "You joined successfully.")
         else:
-            messages.error(request, "Contraseña incorrecta.")
+            messages.error(request, "Incorrect password.")
 
     return redirect("view-league", username=username, leaguename=leaguename)
 
