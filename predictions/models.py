@@ -89,6 +89,11 @@ class Session(models.Model):
     def __str__(self):
         return f"[{self.grand_prix.season} - {self.grand_prix.name}] {self.session_type} - {self.state}"
     
+class ChampionPrediction(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    season = models.IntegerField(default=CURRENT_SEASON)
+    driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
+    team = models.ForeignKey(RacingTeam, on_delete=models.CASCADE)
 class Prediction(models.Model):
     """
     Prediction model.

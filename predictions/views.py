@@ -9,26 +9,39 @@ import json
 from F1Prode.static_variables import DRIVERS_BY_RACE, FNAME_TO_CLASS, PRED_POINTS_BY_POSITION, CURRENT_SEASON, SPRINT_PRED_POINTS_BY_POSITION
 from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result, PredictedPole, ResultPole
 
-def createPred(request, season, location, session_type):
-    location.capitalize()
-    session_type.capitalize()
+def createPred(request, season, location=None, session_type=None):
+    if location and session_type:
+        location.capitalize()
+        session_type.capitalize()
+        champions = False
+    else:
+        champions = True
 
-    # LATER create line-up model for each race for situations when
+    # TODO create line-up model for each race for situations when
     # there aren't the same 20 drivers as before
     # so you will get session.lineup (for example) to drivers
-    gp = (
-        GrandPrix.objects
-        .filter(season=season, location=location)
-        .prefetch_related(
-            Prefetch(
-                'sessions',  # related_name
-                queryset=Session.objects.filter(session_type=session_type),
-                to_attr='session'
-            )
-        )
-    ).first()
 
-    drivers = Driver.objects.filter(season=season)[:DRIVERS_BY_RACE]
+    if not champions:
+        gp = (
+            GrandPrix.objects
+            .filter(season=season, location=location)
+            .prefetch_related(
+                Prefetch(
+                    'sessions',  # related_name
+                    queryset=Session.objects.filter(session_type=session_type),
+                    to_attr='session'
+                )
+            )
+        ).first()
+
+    drivers = (
+        Driver.objects
+        .filter(season=season)
+        .select_related('racing_team')
+    )[:DRIVERS_BY_RACE]
+
+    racing_teams = set(x.racing_team for x in drivers)
+
     position_range = [x for x in range(1, DRIVERS_BY_RACE+1)]
     session = gp.session[0]
 
