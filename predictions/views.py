@@ -44,21 +44,12 @@ def createPred(request, season, location, session_type):
     else:
         points_system = SPRINT_PRED_POINTS_BY_POSITION
 
-    now = datetime.now(timezone.utc)
-    remaining = session.session_date - now
+    countdown_target = session.session_date.isoformat()
 
-    if remaining < timedelta(0):
-        remaining_time = "Lights out!"
-    else:
-        amount_seconds = int(remaining.total_seconds())
-
-        hours, rest = divmod(amount_seconds, 3600)
-        minutes, seconds = divmod(rest, 60)
-
-        remaining_time = f"{hours:02}:{minutes:02}:{seconds:02}"
+    print(countdown_target)
 
     context = {'drivers': drivers, 'positions_range': position_range, "ABB": FNAME_TO_CLASS, "gp": gp, 
-               "session": session, "remaining_time": remaining_time, "POINTS": points_system}
+               "session": session, "countdown_target": countdown_target, "POINTS": points_system}
 
     return render(request, "predicts.html", context)
 
@@ -168,15 +159,16 @@ def save_pred(request):
     except json.JSONDecodeError:
         return JsonResponse({"success": False, "error": "JSON inválido"}, status=400)
     
-def championPred(request, championship_type, season):
-    championship_type.lower()
+def championPred(request, season):
+    countdown_target = Session.objects.filter(grand_prix__season=season, grand_prix__location="Imola", session_type="Race").first().session_date.isoformat()
 
-    limit = TIME_LIMIT_CHAMPIONS_PRED
+    print(countdown_target)
+    racing_teams = RacingTeam.objects.filter(season=season).prefetch_related('drivers')
+    drivers = []
 
-    if championship_type == "drivers":
-        drivers = Driver.objects.filter(season=season)
+    for team in racing_teams:
+        for driver in team.drivers.all():
+            drivers.append(driver)
 
-    elif championship_type == "constructors":
-        racing_teams = RacingTeam.objects.filter(season=season)
-
-    
+    context = {"drivers": drivers, "teams": racing_teams, 'countdown_target': countdown_target}
+    return render(request, 'champions.html', context)

@@ -9,6 +9,9 @@ class RacingTeam(models.Model):
     season = models.IntegerField(default=CURRENT_SEASON)
     points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
 
+    class Meta:
+        ordering = ['-points', 'name']
+
     def __str__(self):
         return f"[{self.season}] {self.name}"
 class Driver(models.Model):

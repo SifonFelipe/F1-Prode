@@ -11,7 +11,7 @@
     
     <div class="race-info">
         <h3>{{ gp.name }} - {{ gp.location }} - {{session.session_type}}</h3>
-        <div class="countdown">Remaining Time: <span id="countdown">{{ remaining_time }}</span></div>
+        <div class="countdown">Remaining Time: <span id="countdown" data-target="{{countdown_target}}">Loading...</span></div>
     </div>
     
 
@@ -69,6 +69,7 @@
 </div>
 
 {% load static %}
+<script src="{% static 'js/countdown.js' %}"
 <script src="{% static 'js/predcreation.js' %}"></script>
 
 {% endblock content %}

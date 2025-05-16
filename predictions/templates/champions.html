@@ -1,0 +1,35 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<div class="prode-container" style="margin-top:15px;">
+    <h1 class="prode-title" style="font-size: xx-large">Make your Championship Prode!</h1>
+
+    <div class="race-info"></div>
+        <h3>Select your driver and team for this season!</h3>
+        <div class="countdown">Remaining Time: <span id="countdown" data-target="{{ countdown_target }}">Loading...</span></div>
+    </div>
+
+    <div class="prode-system">
+        <div class="prode-selection"></div>
+            <h3>Your Prode</h3>
+            <div class="positions-grid" id="positionsGrid">
+                <div class="position-slot position-{{ pos }}" data-position="{{ pos }}">
+                    <div class="position-number">{{ pos }}</div>
+                    <div class="position-points">
+                        <span class="points-badge">{{points}} pts</span>
+                    </div>
+                    <div class="position-slot-content">
+                        <div class="empty-slot-msg">Drag a driver here</div>
+                    </div>
+                </div>
+            </div>
+
+    </div>
+
+
+</div>
+
+{% load static %}
+<script src="{% static 'js/countdown.js' %}" > </script>
+
+{% endblock content %}
