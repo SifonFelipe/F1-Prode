@@ -6,8 +6,8 @@ from datetime import datetime, timezone, timedelta
 
 import json
 
-from F1Prode.static_variables import DRIVERS_BY_RACE, FNAME_TO_CLASS, PRED_POINTS_BY_POSITION, CURRENT_SEASON, SPRINT_PRED_POINTS_BY_POSITION
-from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result, PredictedPole, ResultPole
+from F1Prode.static_variables import DRIVERS_BY_RACE, FNAME_TO_CLASS, PRED_POINTS_BY_POSITION, TIME_LIMIT_CHAMPIONS_PRED, SPRINT_PRED_POINTS_BY_POSITION
+from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result, PredictedPole, ResultPole, RacingTeam
 
 def createPred(request, season, location, session_type):
     location.capitalize()
@@ -114,6 +114,7 @@ def compare_results(request, user, season, location, session_type):
     return render(request, 'compare_predict.html', context)
 
 def save_pred(request):
+    print(request.POST)
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Método no permitido"}, status=405)
 
@@ -167,11 +168,15 @@ def save_pred(request):
     except json.JSONDecodeError:
         return JsonResponse({"success": False, "error": "JSON inválido"}, status=400)
     
-def championPred(request, season):
-    time_limit = Session.objects.get(grand_prix__season=season, grand_prix__n_round=12, session_type="Race")
+def championPred(request, championship_type, season):
+    championship_type.lower()
 
-    drivers = Driver.objects.filter(season=season).select_related("racing_team")
-    racing_teams = set(x.racing_team for x in drivers)
+    limit = TIME_LIMIT_CHAMPIONS_PRED
 
-    context = {}
-    return render(request, 'champion_pred.html', context)
+    if championship_type == "drivers":
+        drivers = Driver.objects.filter(season=season)
+
+    elif championship_type == "constructors":
+        racing_teams = RacingTeam.objects.filter(season=season)
+
+    
