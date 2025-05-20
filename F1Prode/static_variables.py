@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 FNAME_TO_CLASS = {
     "Red Bull Racing": "red-bull",
     "Racing Bulls": "racing-bulls",
@@ -34,3 +36,5 @@ PRED_POLE_POINTS = 4
 DRIVERS_BY_RACE = 20
 
 CURRENT_SEASON = 2025
+
+TIME_LIMIT_CHAMPIONS_PRED = datetime(CURRENT_SEASON, 6, 15, tzinfo=timezone.utc)

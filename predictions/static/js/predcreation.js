@@ -252,49 +252,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Simulación de temporizador de cuenta regresiva
-    function updateCountdown() {
-        const countdownEl = document.getElementById('countdown');
-
-        if (countdownEl.textContent == "Lights out!") {
-            countdownEl.textContent = "Lights out!";
-            countdownEl.style.color = "var(--f1-red)";
-            const actionsDiv = document.querySelector(`.actions`);
-            // Limpiar el contenido actual
-            actionsDiv.innerHTML = '';
-            return;
-        }
-        
-        let [hours, minutes, seconds] = countdownEl.textContent.split(':').map(Number);
-        
-        seconds--;
-        
-        if (seconds < 0) {
-            seconds = 59;
-            minutes--;
-            
-            if (minutes < 0) {
-                minutes = 59;
-                hours--;
-                
-                if (hours < 0) {
-                    countdownEl.textContent = "Lights out!";
-                    alert("Lights out!");
-                    countdownEl.style.color = "var(--f1-red)";
-                    const actionsDiv = document.querySelector(`.actions`);
-                    // Limpiar el contenido actual
-                    actionsDiv.innerHTML = '';
-                    return;
-                }
-            }
-        }
-        
-        countdownEl.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        
-        setTimeout(updateCountdown, 1000);
-    }
-
-    // Inicializar
     updateDriversPool();
-    updateCountdown();
 });
