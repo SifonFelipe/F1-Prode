@@ -14,6 +14,8 @@ class RacingTeam(models.Model):
 
     def __str__(self):
         return f"[{self.season}] {self.name}"
+
+
 class Driver(models.Model):
     """
     Drivers model.
@@ -35,7 +37,8 @@ class Driver(models.Model):
 
     def __str__(self):
         return f"[{self.season}] {self.first_name} {self.last_name} ( {self.number} )"
-    
+
+
 class GrandPrix(models.Model):
     """
     GPs model.
@@ -63,7 +66,8 @@ class GrandPrix(models.Model):
 
     def __str__(self):
         return f"[{self.season}] {self.name} - {"Ended" if self.ended else "Not Ended"}"
-    
+
+
 class Session(models.Model):
     """
     Sessions model.
@@ -91,12 +95,18 @@ class Session(models.Model):
 
     def __str__(self):
         return f"[{self.grand_prix.season} - {self.grand_prix.name}] {self.session_type} - {self.state}"
-    
+
+
 class ChampionPrediction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     season = models.IntegerField(default=CURRENT_SEASON)
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
     team = models.ForeignKey(RacingTeam, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"[{self.season}] {self.user} {self.team.name[:3].upper()} {self.driver.last_name[:3].upper()}"
+
+
 class Prediction(models.Model):
     """
     Prediction model.
@@ -117,6 +127,7 @@ class Prediction(models.Model):
 
     def __str__(self):
         return f"[{self.session.grand_prix.season} - {self.session.grand_prix.name}] Prediction by {self.user.username} for {self.session.session_type}" 
+
 
 class PredictedPosition(models.Model):
     """
@@ -139,7 +150,8 @@ class PredictedPosition(models.Model):
 
     def __str__(self):
         return f"[{self.prediction.session.grand_prix.season} - {self.prediction.session.grand_prix.name} - {self.prediction.session.session_type}] {self.position} - {self.driver.last_name}"
-    
+
+
 class PredictedPole(models.Model):
     prediction = models.ForeignKey(Prediction, on_delete=models.CASCADE, related_name='predicted_pole')
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True, blank=True)
@@ -152,6 +164,7 @@ class PredictedPole(models.Model):
 
     def __str__(self):
         return f"[{self.prediction.session.grand_prix.season} - {self.prediction.session.grand_prix.name} - {self.prediction.session.session_type}] POLE - {self.driver.last_name}"
+
 
 class Result(models.Model):
     """
@@ -177,7 +190,8 @@ class Result(models.Model):
 
     def __str__(self):
         return f"[{self.session.grand_prix.season} - {self.session.grand_prix.name} - {self.session.session_type}] {self.position} - {self.driver.last_name}"
-    
+
+
 class ResultPole(models.Model):
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
     session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name="pole_result")

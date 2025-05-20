@@ -1,13 +1,14 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.db.models import Prefetch
+from django.utils import timezone
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 import json
 
 from F1Prode.static_variables import DRIVERS_BY_RACE, FNAME_TO_CLASS, PRED_POINTS_BY_POSITION, TIME_LIMIT_CHAMPIONS_PRED, SPRINT_PRED_POINTS_BY_POSITION
-from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result, PredictedPole, ResultPole, RacingTeam
+from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result, PredictedPole, ResultPole, RacingTeam, ChampionPrediction
 
 def createPred(request, season, location, session_type):
     location.capitalize()
@@ -105,10 +106,8 @@ def compare_results(request, user, season, location, session_type):
     return render(request, 'compare_predict.html', context)
 
 def save_pred(request):
-    print(request.POST)
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Método no permitido"}, status=405)
-
     try:
         data = json.loads(request.body)
         race_id = data.get("race_id")
@@ -160,9 +159,8 @@ def save_pred(request):
         return JsonResponse({"success": False, "error": "JSON inválido"}, status=400)
     
 def championPred(request, season):
-    countdown_target = Session.objects.filter(grand_prix__season=season, grand_prix__location="Imola", session_type="Race").first().session_date.isoformat()
+    countdown_target = TIME_LIMIT_CHAMPIONS_PRED.isoformat()
 
-    print(countdown_target)
     racing_teams = RacingTeam.objects.filter(season=season).prefetch_related('drivers')
     drivers = []
 
@@ -170,5 +168,38 @@ def championPred(request, season):
         for driver in team.drivers.all():
             drivers.append(driver)
 
-    context = {"drivers": drivers, "teams": racing_teams, 'countdown_target': countdown_target}
+    context = {"drivers": drivers, "teams": racing_teams, 'countdown_target': countdown_target, "range": range(2),
+               "season": season}
     return render(request, 'champions.html', context)
+
+def saveChampionPred(request, season):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Método no permitido"}, status=405)
+    try:
+        if timezone.now() < TIME_LIMIT_CHAMPIONS_PRED:
+            team_id = request.POST['team_champion']
+            driver_id = request.POST['driver_champion']
+            user = request.user
+            driver = Driver.objects.get(id=driver_id)
+            team = RacingTeam.objects.get(id=team_id)
+
+            pred = ChampionPrediction.objects.filter(user=user, season=season).first()
+
+            if pred:
+                pred.team = team
+                pred.driver = driver
+                pred.save()
+            else:
+                ChampionPrediction.objects.create(
+                    user=user,
+                    season=season,
+                    team=team,
+                    driver=driver
+                )
+
+            return redirect('home')
+        else:
+            return JsonResponse({"success": False, "error": "Out of time"})
+
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "error": "JSON inválido"}, status=400)
