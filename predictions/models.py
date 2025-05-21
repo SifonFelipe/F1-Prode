@@ -4,6 +4,18 @@ from datetime import datetime
 
 from F1Prode.static_variables import CURRENT_SEASON
 
+class SeasonSettings(models.Model):
+    season = models.IntegerField()
+    amount_drivers = models.IntegerField()
+    amount_teams = models.IntegerField()
+    race_points_pred = models.JSONField()
+    sprint_points_pred = models.JSONField()
+    qualy_points_pred = models.IntegerField()
+
+    def __str__(self):
+        return f"[{self.season}] settings"
+
+
 class RacingTeam(models.Model):
     name = models.CharField(max_length=100)
     season = models.IntegerField(default=CURRENT_SEASON)
