@@ -1,4 +1,4 @@
-from predictions.models import GrandPrix, Session, Result, Driver, RacingTeam, ResultPole, Prediction
+from predictions.models import GrandPrix, Session, Result, Driver, RacingTeam, ResultPole
 
 from datetime import datetime, timedelta, date
 

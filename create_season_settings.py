@@ -24,14 +24,14 @@ for idx, point_pred in enumerate([race_points_pred, sprint_points_pred]):
                 point_pred[y] = points
 
             x = 11
-        
+
         elif x == 11 or x == 16:
             points = float(input(f"\nEnter points from {x} to {x+4} position:\n"))
             for y in range(x, x+4):
                 point_pred[y] = points
 
             x += 5
-        
+
         else:
             points = float(input(f"\nEnter points for {x} position:\n"))
             point_pred[x] = points
@@ -52,4 +52,3 @@ SeasonSettings.objects.create(
     sprint_points_pred=json.dumps(sprint_points_pred),
     qualy_points_pred=qualy_points_pred
 )
-
