@@ -1,19 +1,20 @@
-from predictions.models import GrandPrix, Session, Result, Driver, RacingTeam, ResultPole
-
-from datetime import datetime, timedelta, date
-
-from F1Prode.static_variables import CURRENT_SEASON
-
+from predictions.models import GrandPrix, Session, Result, Driver, RacingTeam, ResultPole, SeasonSettings
+from django.db.models import Prefetch
+from datetime import datetime
+from django.utils.timezone import make_aware
+from F1Prode.static_variables import ALL_SEASONS
 import fastf1
 import logging
 
-#disable log for fastf1
+
+# Disable log for fastf1
 logging.getLogger('fastf1').setLevel(logging.CRITICAL)
 
-def get_driver_and_team(row, season):
-    driver = Driver.objects.get(number=row["DriverNumber"], last_name=row["LastName"], season=season)
-    team = RacingTeam.objects.get(name=row["TeamName"], season=season)
+def get_driver_and_team(row):
+    driver = drivers.get(number=row["DriverNumber"], last_name=row["LastName"])
+    team = racing_teams.get(name=row["TeamName"])
     return driver, team
+
 
 def get_driver_best_lap(session_data, driver):
     filtered_laps = session_data.laps[
@@ -23,19 +24,21 @@ def get_driver_best_lap(session_data, driver):
 
     if not filtered_laps.empty:
         return filtered_laps.iloc[-1]["LapTime"]
+
     print(f"{driver.last_name} didn't complete a lap!")
     return None
 
-def get_session_and_load(gp, session_type, season):
+
+def get_session_and_load(season, gp, session_type):
     print(f"Fetching {session_type} Results... (This may take some time)")
 
-    session = Session.objects.get(grand_prix=gp, session_type=session_type)
     session_data = fastf1.get_session(season, gp.location, session_type)
     session_data.load()
 
-    return session, session_data
+    return session_data, session_data.results.empty
 
-def process_race_results(session_data, session, season):
+
+def process_race_results(session_data, session):
     fastest_lap = session_data.laps.pick_fastest()
     fastest_driver_n = fastest_lap["DriverNumber"]
     result_dict = {}
@@ -44,7 +47,7 @@ def process_race_results(session_data, session, season):
     teams = []
 
     for _, row in session_data.results.iterrows():
-        driver, team = get_driver_and_team(row, season) #slow query TODO
+        driver, team = get_driver_and_team(row)
         laps_count = (session_data.laps["DriverNumber"] == row["DriverNumber"]).sum()
         best_lap_time = get_driver_best_lap(session_data, driver)
         
@@ -72,15 +75,14 @@ def process_race_results(session_data, session, season):
     Driver.objects.bulk_update(drivers, ['points'])
     RacingTeam.objects.bulk_update(teams, ['points'])
 
-    print("Done!\n")
-    return result_dict
+    print("Done!")
+    # return result_dict  #  If needed
 
-def process_qualifying_results(session_data, session, season):
-    print(f"Processing Qualifying Results...")
 
+def process_qualifying_results(session_data, session):
     for _, row in session_data.results.iterrows():
         if row["Position"] == 1 or row["Position"] == "1":
-            driver, team = get_driver_and_team(row, season)
+            driver, team = get_driver_and_team(row)
             ResultPole.objects.create(
                 driver=driver,
                 session=session,
@@ -90,39 +92,77 @@ def process_qualifying_results(session_data, session, season):
 
             break
 
-    print("Done!\n")
-    
-now = datetime.now()
-year = now.year
+    print("Done!")
 
-grand_prixs = list(GrandPrix.objects.filter(date__range=(date(CURRENT_SEASON, 1, 1), date.today() + timedelta(hours=12)), ended=False))
 
-for gp in grand_prixs:
-    print(f"Getting and Comparing data from {gp.name}")
+sessions_to_fetch = ["Race", "Sprint", "Qualifying"]
+sessions_to_update = []
+gps_to_update = []
 
-    sessions_to_fetch = ["Qualifying", "Race"]
+for season in ALL_SEASONS:
+    print(f"Getting results from {season} season")
 
-    if gp.event_format == "sprint_qualifying":
-        print("Has Sprint Race!\n")
-        sessions_to_fetch.insert(0, "Sprint")
+    # Data to make the query
+    from_date = make_aware(datetime(season, 1, 1))
+    to_date = make_aware(datetime.now())
 
-    for session_type in sessions_to_fetch:
-        session, session_data = get_session_and_load(gp, session_type, CURRENT_SEASON)
+    season_settings = (
+        SeasonSettings.objects
+        .filter(season=season)
+        .prefetch_related(
+            Prefetch(
+                "gps",
+                queryset=GrandPrix.objects.filter(
+                    ended=False,
+                    start_date__range=(from_date, to_date)
+                ).prefetch_related(
+                    Prefetch(
+                        "sessions",
+                        queryset=Session.objects.filter(
+                            session_type__in=sessions_to_fetch,
+                            session_date__range=(from_date, to_date)
+                        )
+                    )
+                )
+            ),
+            "racing_teams",
+            "drivers"
+        )
+    ).first()
 
-        if not session_data.results.empty:
-            if session_type == "Race":
-                print(f"Processing Race Results...")
-                result_dict = process_race_results(session_data, session, CURRENT_SEASON)
+    gps = season_settings.gps.all()
+    racing_teams = season_settings.racing_teams.all()
+    drivers = season_settings.drivers.all()
 
-            elif session_type == "Qualifying":
-                process_qualifying_results(session_data, session, CURRENT_SEASON)
+    for gp in gps:
+        print(f"\nGetting and Comparing data from {gp.name}")
 
-            elif session_type == "Sprint":
-                print(f"Processing Sprint Race Results...")
-                result_dict = process_race_results(session_data, session, CURRENT_SEASON)
+        if gp.event_format == "sprint_qualifying":
+            print("Has Sprint Race!")
 
-            session.state = "FWC" #Finished, Waiting Compare
-            session.save()
+        gp_sessions = gp.sessions.all()
+        for session in gp_sessions:
+            session_type = session.session_type
+            session_data, empty = get_session_and_load(season, gp, session_type)
 
-    gp.ended = True
-    gp.save()
+            if not empty:
+                print(f"Processing {session_type} Results")
+
+                if session_type == "Race" or session_type == "Sprint":
+                    process_race_results(session_data, session)
+
+                elif session_type == "Qualifying":
+                    process_qualifying_results(session_data, session)
+
+                session.state = "FWC"  # Finished, Waiting Compare
+                sessions_to_update.append(session)
+
+                if session_type == "Race":
+                    gp.ended = True
+                    gps_to_update.append(gp)
+
+        if empty:
+            break
+
+Session.objects.bulk_update(sessions_to_update, ['state'])
+GrandPrix.objects.bulk_update(gps_to_update, ['ended'])

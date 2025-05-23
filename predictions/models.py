@@ -1,8 +1,6 @@
 from django.db import models
 from django.conf import settings
-from datetime import datetime
-
-from F1Prode.static_variables import CURRENT_SEASON
+from datetime import timedelta
 
 class SeasonSettings(models.Model):
     season = models.IntegerField()
@@ -13,12 +11,12 @@ class SeasonSettings(models.Model):
     qualy_points_pred = models.IntegerField()
 
     def __str__(self):
-        return f"[{self.season}] settings"
+        return f"{self.season}"
 
 
 class RacingTeam(models.Model):
     name = models.CharField(max_length=100)
-    season = models.IntegerField(default=CURRENT_SEASON)
+    season = models.ForeignKey(SeasonSettings, on_delete=models.DO_NOTHING, related_name='racing_teams')
     points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
 
     class Meta:
@@ -34,11 +32,10 @@ class Driver(models.Model):
     A driver for year.
     """
     
-    season = models.IntegerField(default=CURRENT_SEASON)
+    season = models.ForeignKey(SeasonSettings, on_delete=models.DO_NOTHING, related_name='drivers')
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     number = models.IntegerField()
-    team_name = models.CharField(max_length=60)
     racing_team = models.ForeignKey(RacingTeam, on_delete=models.DO_NOTHING, related_name='drivers')
     country = models.CharField(max_length=70, null=True, blank=True)
     headshot = models.URLField(max_length=500)
@@ -55,6 +52,7 @@ class GrandPrix(models.Model):
     """
     GPs model.
     """
+
     EVENT_TYPES = [
         ("testing", "testing"),
         ("conventional", "normal"),
@@ -62,11 +60,12 @@ class GrandPrix(models.Model):
     ]
 
     name = models.CharField(max_length=100)
-    location = models.CharField(max_length=100) #country or city
+    location = models.CharField(max_length=100)  # country or city
     country = models.CharField(max_length=100)
     date = models.DateField()
+    start_date = models.DateField()
     n_round = models.IntegerField(unique=True, null=True)
-    season = models.IntegerField(default=CURRENT_SEASON)
+    season = models.ForeignKey(SeasonSettings, on_delete=models.DO_NOTHING, related_name="gps")
     event_format = models.CharField(max_length=50, choices=EVENT_TYPES, default="testing")
     ended = models.BooleanField(default=False)
 
@@ -111,12 +110,12 @@ class Session(models.Model):
 
 class ChampionPrediction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    season = models.IntegerField(default=CURRENT_SEASON)
+    season = models.ForeignKey(SeasonSettings, on_delete=models.DO_NOTHING, related_name="champion_preds")
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
     team = models.ForeignKey(RacingTeam, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"[{self.season}] {self.user} {self.team.name[:3].upper()} {self.driver.last_name[:3].upper()}"
+        return f"[{self.season.season}] {self.user} {self.team.name[:3].upper()} {self.driver.last_name[:3].upper()}"
 
 
 class Prediction(models.Model):

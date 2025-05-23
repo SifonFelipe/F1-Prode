@@ -38,17 +38,13 @@ for idx, point_pred in enumerate([race_points_pred, sprint_points_pred]):
 
             x += 1
 
-already_exists = SeasonSettings.objects.filter(season=season).first()
-
-if already_exists:
-    print(f"Deleting {already_exists}, id={already_exists.id}")
-    already_exists.delete()
-
-SeasonSettings.objects.create(
+SeasonSettings.objects.update_or_create(
     season=season,
-    amount_drivers=amount_drivers,
-    amount_teams=amount_drivers / 2,
-    race_points_pred=json.dumps(race_points_pred),
-    sprint_points_pred=json.dumps(sprint_points_pred),
-    qualy_points_pred=qualy_points_pred
+    defaults={
+        'amount_drivers': amount_drivers,
+        'amount_teams': amount_drivers / 2,
+        'race_points_pred': json.dumps(race_points_pred),
+        'sprint_points_pred': json.dumps(sprint_points_pred),
+        'qualy_points_pred': qualy_points_pred,
+    }
 )

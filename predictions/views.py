@@ -8,9 +8,10 @@ from datetime import datetime, timedelta
 import json
 
 from F1Prode.static_variables import DRIVERS_BY_RACE, FNAME_TO_CLASS, PRED_POINTS_BY_POSITION, TIME_LIMIT_CHAMPIONS_PRED, SPRINT_PRED_POINTS_BY_POSITION
-from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result, PredictedPole, ResultPole, RacingTeam, ChampionPrediction
+from .models import Driver, Session, GrandPrix, Prediction, PredictedPosition, Result, PredictedPole, ResultPole, RacingTeam, ChampionPrediction, SeasonSettings
 
 def createPred(request, season, location, session_type):
+    print(SeasonSettings.objects.get(season=2025).id)
     location.capitalize()
     session_type.capitalize()
 

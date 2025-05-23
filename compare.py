@@ -1,8 +1,6 @@
 from predictions.models import Session, Result, Prediction, PredictedPosition, PredictedPole, ResultPole, SeasonSettings
 from ranking.models import YearScore
-
 from django.db.models import Prefetch, Count
-
 from decimal import Decimal
 import json
 
@@ -22,9 +20,10 @@ def update_rankings_and_participations(seasons, users):
             scores_update.append(score)
 
         # counting different gps
+        season_obj = SeasonSettings.objects.get(season=season)
         predictions_per_season = (
             Prediction.objects
-            .filter(user__season_scores__in=users, session__grand_prix__season=season)
+            .filter(user__season_scores__in=users, session__grand_prix__season=season_obj)
             .values("user__season_scores__id", "session__grand_prix__season")
             .annotate(gp_count=Count('session__grand_prix', distinct=True))
         )
@@ -48,7 +47,6 @@ def race_results_list(session):
     """
     Creates a list with the results of the session, in order.
     """
-
     drivers_positions = []
 
     for result in session.race_results.all():
@@ -118,7 +116,7 @@ sessions_to_fetch = ["Race", "Sprint", "Qualifying"]
 sessions_to_compare = (
     Session.objects
     .filter(state="FWC", session_type__in=sessions_to_fetch)
-    .select_related('grand_prix')
+    .select_related('grand_prix', 'grand_prix__season')
     .prefetch_related(
         Prefetch(
             'predictions',
@@ -141,8 +139,6 @@ sessions_to_compare = (
     )
 )
 
-del sessions_to_fetch
-
 sessions_to_update = []  # Sessions to update state from FWC to F
 last_setting = 0  # Check when settings change
 seasons = []  # Seasons list to iterate when changing rankings and participations
@@ -151,7 +147,7 @@ all_settings = SeasonSettings.objects.all()  # Settings from all the years
 
 for session in sessions_to_compare:
     session_type = session.session_type
-    session_season = session.grand_prix.season
+    session_season = session.grand_prix.season.season
 
     print(f"\nComparing Results and Predictions of\n{session_type} - {session.grand_prix.name}")
 
