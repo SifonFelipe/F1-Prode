@@ -151,7 +151,7 @@ for session in sessions_to_compare:
 
     print(f"\nComparing Results and Predictions of\n{session_type} - {session.grand_prix.name}")
 
-    #  Check if the season settings change and changes it if it does
+    # Check if the season settings change and changes it if it does
     if last_setting != session_season:
         last_setting = session_season
         settings = all_settings.get(season=session_season)

@@ -19,7 +19,6 @@ def createPred(request, season, location, session_type):
     # there aren't the same 20 drivers as before
     # so you will get session.lineup (for example) to drivers
 
-
     gp = (
         GrandPrix.objects
         .filter(season=season, location=location)

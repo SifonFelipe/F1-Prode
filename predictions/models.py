@@ -40,6 +40,7 @@ class Driver(models.Model):
     country = models.CharField(max_length=70, null=True, blank=True)
     headshot = models.URLField(max_length=500)
     points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["-points", "number"]
@@ -68,6 +69,7 @@ class GrandPrix(models.Model):
     season = models.ForeignKey(SeasonSettings, on_delete=models.DO_NOTHING, related_name="gps")
     event_format = models.CharField(max_length=50, choices=EVENT_TYPES, default="testing")
     ended = models.BooleanField(default=False)
+    lineup_associated = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["date"]
@@ -104,9 +106,25 @@ class Session(models.Model):
     session_date = models.DateTimeField()
     state = models.CharField(max_length=50, choices=STATES, default="NF")
 
+    class Meta:
+        ordering = ['session_date']
+
     def __str__(self):
         return f"[{self.grand_prix.season} - {self.grand_prix.name}] {self.session_type} - {self.state}"
 
+
+class RaceLineUp(models.Model):
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name="drivers")
+    driver = models.ForeignKey(Driver, on_delete=models.CASCADE, related_name="participations")
+    team = models.ForeignKey(RacingTeam, on_delete=models.CASCADE, related_name="participations")
+
+    participated = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ("session", "driver")
+
+    def __str__(self):
+        return f"{self.session} - {self.driver} - {self.team}"
 
 class ChampionPrediction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
