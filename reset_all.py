@@ -1,4 +1,4 @@
-from predictions.models import Driver, Prediction, RacingTeam, Result, Session, GrandPrix, PredictedPosition, ResultPole, PredictedPole
+from predictions.models import Driver, Prediction, RacingTeam, Result, Session, GrandPrix, PredictedPosition, ResultPole, PredictedPole, RaceLineUp
 from ranking.models import YearScore
 
 from datetime import datetime, date, timedelta
@@ -6,8 +6,11 @@ from datetime import datetime, date, timedelta
 from F1Prode.static_variables import CURRENT_SEASON
 
 grand_prixs = GrandPrix.objects.filter(date__range=(date(CURRENT_SEASON, 1, 1), date.today() + timedelta(days=1)))
+# CHANGE THIS!!!
 
 reset_sessions_to_fwc = True if str(input("Reset sessions to FWC? [Y/n]")).lower() == "y" else False
+
+reset_gp_lu = True if str(input("Delete and reset lineups? [Y/n]")).lower() == "y" else False
 
 if reset_sessions_to_fwc:
     #change state and reset predictions scores
@@ -39,3 +42,7 @@ if reset_all:
         predictions.update(points_scored=0)
         PredictedPosition.objects.filter(prediction__in=predictions).update(correct=False)
         PredictedPole.objects.filter(prediction__in=predictions).update(correct=False)
+
+if reset_gp_lu:
+    RaceLineUp.objects.filter(session__grand_prix__in=grand_prixs).delete()
+    grand_prixs.update(lineup_associated=False)
