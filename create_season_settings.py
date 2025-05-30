@@ -1,5 +1,6 @@
 from predictions.models import SeasonSettings
 import json
+from datetime import datetime, timezone
 
 season = int(input("Enter season year:\n"))
 
@@ -27,7 +28,7 @@ for idx, point_pred in enumerate([race_points_pred, sprint_points_pred]):
 
         elif x == 11 or x == 16:
             points = float(input(f"\nEnter points from {x} to {x+4} position:\n"))
-            for y in range(x, x+4):
+            for y in range(x, x+5):
                 point_pred[y] = points
 
             x += 5
@@ -46,5 +47,6 @@ SeasonSettings.objects.update_or_create(
         'race_points_pred': json.dumps(race_points_pred),
         'sprint_points_pred': json.dumps(sprint_points_pred),
         'qualy_points_pred': qualy_points_pred,
+        'limit_ch_pred': datetime(season, 6, 15, tzinfo=timezone.utc)
     }
 )

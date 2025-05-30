@@ -21,11 +21,11 @@
             <h3>Drivers Available</h3>
             <div class="drivers-grid" id="driversPool">
                 {% for driver in drivers %}
-                <div class="driver-card {{ ABB|get:driver.team_name }}" draggable="true" data-driver-id="{{ driver.id }}">
+                <div class="driver-card {{ ABB|get:driver.racing_team.name }}" draggable="true" data-driver-id="{{ driver.id }}">
                     <img src="{% if driver.headshot %}{{ driver.headshot }}{% endif %}" alt="{{ driver.last_name }}">
                     <div class="driver-info">
                         <div class="name">{{ driver.last_name }}</div>
-                        <div class="team">{{ driver.team_name }}</div>
+                        <div class="team">{{ driver.racing_team.name }}</div>
                     </div>
                 </div>
                 {% endfor %}
@@ -36,7 +36,6 @@
         <div class="prode-selection">
             <h3>Your Prode</h3>
             <div class="positions-grid" id="positionsGrid">
-                {% if session.session_type != "Qualifying" %}
                 {% for pos, points in POINTS.items %}
                 <div class="position-slot position-{{ pos }}" data-position="{{ pos }}">
                     <div class="position-number">{{ pos }}</div>
@@ -48,17 +47,6 @@
                     </div>
                 </div>
                 {% endfor %}
-                {% else %}
-                <div class="position-slot position-1" data-position="1" style="min-height: 200px">
-                    <div class="position-number">1</div>
-                    <div class="position-points">
-                        <span class="points-badge">4 pts</span>
-                    </div>
-                    <div class="position-slot-content">
-                        <div class="empty-slot-msg">Drag a driver here</div>
-                    </div>
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>
@@ -69,7 +57,7 @@
 </div>
 
 {% load static %}
-<script src="{% static 'js/countdown.js' %}"
+<script src="{% static 'js/countdown.js' %}"></script>
 <script src="{% static 'js/predcreation.js' %}"></script>
 
 {% endblock content %}

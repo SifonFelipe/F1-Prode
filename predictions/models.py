@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
-from datetime import timedelta
-
+from datetime import datetime
 class SeasonSettings(models.Model):
     season = models.IntegerField()
     amount_drivers = models.IntegerField()
@@ -9,6 +8,7 @@ class SeasonSettings(models.Model):
     race_points_pred = models.JSONField()
     sprint_points_pred = models.JSONField()
     qualy_points_pred = models.IntegerField()
+    limit_ch_pred = models.DateField()
 
     def __str__(self):
         return f"{self.season}"

@@ -389,18 +389,18 @@ body {
         {% if not result.disqualified %}
         <div class="comparison-row {% if prediction.correct == True %}correct{% endif %}">
             <div class="position-number">{% if session_type != "Qualifying"%}{{prediction.position}}{% else %}1{% endif %}</div>
-            <div class="driver-card position-number-{% if session_type != 'Qualifying'%}{{prediction.position}}{% else %}1{% endif %} {{ ABB|get:prediction.driver.team_name }}">
+            <div class="driver-card position-number-{% if session_type != 'Qualifying'%}{{prediction.position}}{% else %}1{% endif %} {{ ABB|get:prediction.driver.racing_team.name }}">
                 <img src="{% if prediction.position == 1 or session_type == 'Qualifying' %}/static/img/win-images/{{prediction.driver.last_name.lower}}-win.png{% else %}{{ prediction.driver.headshot }}{% endif %}" 
                 alt="{{prediction.driver.last_name}}">
                 <div class="driver-info">
                     <span class="driver-name">{{prediction.driver.last_name}}</span>
-                    <span class="driver-team">{{prediction.driver.team_name}}</span>
+                    <span class="driver-team">{{prediction.driver.racing_team.name}}</span>
                 </div>
                 {% if prediction.correct == True %}
                 <span class="points-badge">{% if session_type != "Qualifying" %}{{ POINTS_SYSTEM|get:prediction.position}}{% else %}{{POINTS_SYSTEM|get:1}}{% endif %} pts</span>
                 {% endif%}
             </div>
-            <div class="driver-card position-number-{% if session_type != 'Qualifying'%}{{prediction.position}}{% else %}1{% endif %} {{ ABB|get:result.driver.team_name }}">
+            <div class="driver-card position-number-{% if session_type != 'Qualifying'%}{{prediction.position}}{% else %}1{% endif %} {{ ABB|get:result.driver.racing_team.name}}">
                 <img src="{% if result.position == 1 or session_type == 'Qualifying' %}/static/img/win-images/{{result.driver.last_name.lower}}-win.png{% else %}{{ result.driver.headshot }}{% endif %}" alt="{{result.driver.last_name}}">
                 <div class="driver-info">
                     <span class="driver-name">{{result.driver.last_name}}</span>

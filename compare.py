@@ -103,9 +103,9 @@ def compare_preds_update_db(session, result_data, score_format, season, mode='Ra
     Prediction.objects.bulk_update(updated_preds, ['points_scored'])
     YearScore.objects.bulk_update(updated_ys, ['points'])
 
-    if mode == 'race':
+    if mode == 'Race':
         PredictedPosition.objects.bulk_update(updated_correct_objs, ['correct'])
-    elif mode == 'qualy':
+    elif mode == 'Qualifying':
         PredictedPole.objects.bulk_update(updated_correct_objs, ['correct'])
 
     return user_set

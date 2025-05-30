@@ -41,15 +41,16 @@ def list_to_int(d_set):
     return new_set
 
 
-def create_lineups(drivers, lu_models, race):
-    for driver in drivers:
-        lu_models.append(
-            RaceLineUp(
-                driver=driver,
-                team=driver.racing_team,
-                session=race,
+def create_lineups(drivers, lu_models, sessions):
+    for session in sessions:
+        for driver in drivers:
+            lu_models.append(
+                RaceLineUp(
+                    driver=driver,
+                    team=driver.racing_team,
+                    session=session,
+                )
             )
-        )
 
     return lu_models
 
@@ -72,7 +73,7 @@ for season in ALL_SEASONS:
             Prefetch(
                 "sessions",
                 queryset=Session.objects.filter(
-                    session_type__in=["Practice 1", "Practice 2", "Race"]
+                    session_type__in=["Race", "Sprint", "Qualifying"]
                 )
             )
         )
@@ -88,10 +89,14 @@ for season in ALL_SEASONS:
         for gp in gps:
             print(f"Creating LineUp for {gp.name}\nFetching official drivers")
 
+            to_add_lu = ["Race", "Qualifying"]
             if gp.event_format == "conventional":
                 session = get_session(gp.season.season, gp.location, 'Practice 2')
             else:
                 session = get_session(gp.season.season, gp.location, 'Practice 1')
+                to_add_lu.append("Sprint")
+                
+            session_objs_for_lu = gp.sessions.all()
 
             session.load()
             print("Done!")
@@ -103,9 +108,7 @@ for season in ALL_SEASONS:
 
                 lu_drivers = drivers_db.filter(number__in=lu_drivers)
 
-                race_obj = gp.sessions.all().get(session_type="Race")
-
-                lu_objects = create_lineups(lu_drivers, lu_objects, race_obj)
+                lu_objects = create_lineups(lu_drivers, lu_objects, session_objs_for_lu)
 
                 gp.lineup_associated = True
                 gp_objects.append(gp)
@@ -126,10 +129,11 @@ for season in ALL_SEASONS:
         .prefetch_related(
             Prefetch(
                 "sessions",
-                queryset=Session.objects.filter(session_type="Race").prefetch_related(
+                queryset=Session.objects.filter(session_type__in=["Race", "Qualifying", "Sprint"])
+                .prefetch_related(
                     "drivers"
                 ),
-                to_attr="race"
+                to_attr="sessions_f"
             )
         )
     )
@@ -139,20 +143,13 @@ for season in ALL_SEASONS:
 
         default_lu_dict = fetch_teams_drivers_db(season)
         for gp in future_gps:
-            race = gp.race[0]
+            sessions = gp.sessions_f
 
-            if not race.drivers.all():
+            if not sessions[0].drivers.all():
                 print(f"Creating default lineup for {gp.name}")
-
+                
                 for team, drivers in default_lu_dict.items():
-                    for driver in drivers:
-                        lu_objects.append(
-                            RaceLineUp(
-                                driver=driver,
-                                team=driver.racing_team,
-                                session=race
-                            )
-                        )
+                    lu_objects = create_lineups(drivers, lu_objects, sessions)
 
                 print("Done!\n")
             else:
