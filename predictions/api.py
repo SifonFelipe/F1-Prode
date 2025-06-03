@@ -17,7 +17,87 @@ def get_points_system(s_settings, session_type):
     return points_system
 
 
-def compare_preds_with_results(preds, results):
+def build_results_prefetch(session_type):
+    return [
+        Prefetch(
+            'race_results',
+            queryset=pm.Result.objects
+            .select_related('driver', 'for_which_team'),
+            to_attr='result'
+        )
+        if session_type != "Qualifying" else
+        Prefetch(
+            'pole_result',
+            queryset=pm.Result.objects
+            .select_related('driver', 'for_which_team'),
+            to_attr='result'
+        )
+    ]
+
+
+def build_predictions_prefetch(user, session_type):
+    if session_type == "Qualifying":
+        pred_fetch = 'predicted_pole__driver'
+    else:
+        pred_fetch = 'predicted_positions__driver'
+
+    return [
+        Prefetch(
+            'predictions',
+            queryset=pm.Prediction.objects
+            .filter(user__username=user)
+            .prefetch_related(pred_fetch),
+            to_attr='pred'
+        )
+    ]
+
+
+def fetch_full_session_data(season, location, session_type, user=None,
+                            include_results=False, include_predictions=False, include_lineup=False):
+    session_queryset = (
+        pm.Session.objects
+        .filter(
+            session_type=session_type,
+            grand_prix__location=location,
+            grand_prix__season__season=season
+        )
+        .select_related('grand_prix__season')
+    )
+
+    if include_lineup:
+        session_queryset = session_queryset.prefetch_related(
+            Prefetch(
+                'drivers',
+                queryset=pm.RaceLineUp.objects.select_related('driver'),
+                to_attr='lineup'
+            )
+        )
+
+    if include_results:
+        session_queryset = session_queryset.prefetch_related(
+            *build_results_prefetch(session_type)
+        )
+
+    if include_predictions and user:
+        session_queryset = session_queryset.prefetch_related(
+            *build_predictions_prefetch(user, session_type)
+        )
+
+    return session_queryset.first()
+
+
+def get_preds(pred):
+    pole = list(pred.predicted_pole.all())
+    results = list(pred.predicted_positions.all())
+
+    if len(pole) == 1:
+        return pole
+    else:
+        return results
+
+
+def compare_preds_with_results(pred, results):
+    preds = get_preds(pred)
     comparision = {}
     guessed = 0
 
@@ -30,94 +110,47 @@ def compare_preds_with_results(preds, results):
     return comparision, guessed
 
 
-def get_gp_sess_lu_and_pts(season, location, session_type):
-    s_settings = (
-        pm.SeasonSettings.objects
-        .filter(season=season)
-        .prefetch_related(
-            Prefetch(
-                "gps",
-                queryset=pm.GrandPrix.objects
-                .filter(location=location)
-                .prefetch_related(
-                    Prefetch(
-                        "sessions",
-                        queryset=pm.Session.objects
-                        .filter(session_type=session_type)
-                        .prefetch_related('drivers'),
-                        to_attr='session'
-                    )
-                ),
-                to_attr='gp'
+def handle_qualifying_prediction(prediction, positions, created):
+    if len(positions) != 1 or '1' not in positions:
+        return False
+    
+    try:
+        driver = pm.Driver.objects.get(id=positions['1'])
+    except pm.Driver.DoesNotExist:
+        return False
+    
+    pm.PredictedPole.objects.update_or_create(
+        prediction=prediction,
+        default={'driver': driver}
+    )
+    return True
+
+
+def handle_race_or_sprint_prediction(prediction, positions, created, settings):
+    if len(positions) != settings.amount_drivers:
+        return False
+    
+    driver_ids = list(positions.values())
+    drivers = pm.Driver.objects.in_bulk(driver_ids)
+
+    try:
+        predictions = [
+            pm.PredictedPosition(
+                prediction=prediction,
+                driver=drivers[int(driver_id)],
+                position=int(pos)
             )
-        )
-    ).first()
 
-    points_system = get_points_system(s_settings, session_type)
+            for pos, driver_id in positions.items()
+        ]
+    except:
+        return False
+    
+    if not created:
+        pm.PredictedPosition.objects.filter(prediction=prediction).delete()
 
-    gp = s_settings.gp[0]
-    session = gp.session[0]
-
-    lineups = []
-    for lineup in session.drivers.all():
-        lineups.append(lineup.driver)
-
-    return s_settings, gp, session, lineups, points_system
-
-
-def get_sess_results_and_preds(location, season, session_type, user):
-    if session_type == "Qualifying":
-        pred_fetch = 'predicted_pole__driver'
-    else:
-        pred_fetch = 'predicted_positions__driver'
-
-    s_settings = pm.SeasonSettings.objects.get(season=season)
-
-    session = (
-        pm.Session.objects
-        .filter(
-            grand_prix__location=location,
-            grand_prix__season=s_settings,
-            session_type=session_type
-        )
-        .select_related('grand_prix')
-        .prefetch_related(
-            Prefetch(
-                'predictions',
-                queryset=pm.Prediction.objects
-                .filter(user__username=user)
-                #.select_related('user')
-                .prefetch_related(pred_fetch),
-                to_attr='pred'
-            ),
-            Prefetch(
-                'race_results',
-                queryset=pm.Result.objects
-                .select_related('driver', 'for_which_team'),
-                to_attr='results'
-            ),
-
-            Prefetch(
-                'pole_result',
-                queryset=pm.ResultPole.objects
-                .select_related('driver', 'for_which_team'),
-                to_attr='result'
-            )
-        )
-    ).first()
-
-    points_system = get_points_system(s_settings, session_type)
-    gp = session.grand_prix
-    prediction = session.pred[0]
-
-    if session_type == "Qualifying":
-        results = session.result
-        prediction_preds = prediction.predicted_pole.all()
-    else:
-        results = session.results
-        prediction_preds = prediction.predicted_positions.all()
-
-    return gp, session, results, prediction, prediction_preds, points_system
+    pm.PredictedPosition.objects.bulk_create(predictions)
+    return True
 
 
 def save_prediction(user, session_id, positions):
@@ -127,7 +160,10 @@ def save_prediction(user, session_id, positions):
         .select_related('grand_prix__season')
     ).first()
 
-    s_settings = session.grand_prix.season
+    settings = session.grand_prix.season
+
+    if not session or session.session_date < datetime.now(timezone.utc):
+        return False
 
     prediction, created = (
         pm.Prediction.objects
@@ -137,46 +173,13 @@ def save_prediction(user, session_id, positions):
         )
     )
 
-    now = datetime.now(timezone.utc)
-    if session.session_date < now:
-        return False
-
-    session_type = session.session_type
-
-    if session_type == "Qualifying":
-        if len(positions) != 1:
+    match session.session_type:
+        case "Qualifying":
+            return handle_qualifying_prediction(prediction, positions, created)
+        case "Race" | "Sprint":
+            return handle_race_or_sprint_prediction(prediction, positions, created, settings)
+        case _:
             return False
-        
-        driver = pm.Driver.objects.get(id=positions['1'])
-        pm.PredictedPole.objects.update_or_create(
-            prediction=prediction,
-            defaults={'driver': driver}
-        )
-
-    elif session_type == "Race" or session_type == "Sprint":
-        if len(positions) != s_settings.amount_drivers:
-            return False
-        
-        if not created:
-            pm.PredictedPosition.objects.filter(
-                prediction=prediction
-            ).delete()
-
-        driver_ids = list(positions.values())
-        drivers = pm.Driver.objects.in_bulk(driver_ids)
-
-        preds = [
-            pm.PredictedPosition(
-                prediction=prediction,
-                driver=drivers[int(driver_id)],
-                position=int(pos)
-            )
-            for pos, driver_id in positions.items()
-        ]
-
-        pm.PredictedPosition.objects.bulk_create(preds)
-
-    return True
 
 
 def get_teams_and_drivers(season, countdown_ch=False):
@@ -198,8 +201,41 @@ def get_teams_and_drivers(season, countdown_ch=False):
     teams = s_settings.teams
     drivers = s_settings.driversset
 
-    if countdown:
+    if countdown_ch:
         countdown = s_settings.limit_ch_pred.isoformat()
         return teams, drivers, countdown
 
     return teams, drivers
+
+
+def save_champions(request, user, season):
+    driver = request['driver_champion']
+    team = request['team_champion']
+
+    settings = (
+        pm.SeasonSettings.objects
+        .filter(season=season)
+        .prefetch_related(
+            Prefetch(
+                "drivers",
+                queryset=pm.Driver.objects.filter(id=driver),
+                to_attr="driver"
+            ),
+            Prefetch(
+                "racing_teams",
+                queryset=pm.RacingTeam.objects.filter(id=team),
+                to_attr="team"
+            )
+        )
+    ).first()
+
+    if settings.limit_ch_pred < datetime.now(timezone.utc).date():
+        return False
+    
+    pm.ChampionPrediction.objects.update_or_create(
+        user=user,
+        season=settings,
+        defaults={'driver': settings.driver[0], 'team': settings.team[0]}
+    )
+
+    return True
