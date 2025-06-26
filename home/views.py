@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.db.models import Prefetch
 
 from predictions.models import Driver, GrandPrix, Session, Prediction, Result
-from ranking.models import YearScore
+from ranking.models import SeasonScore
 from F1Prode.static_variables import CURRENT_SEASON
 
 import requests
@@ -59,7 +59,7 @@ def home(request):
         })
 
     ranking = (
-        YearScore.objects
+        SeasonScore.objects
         .filter(season=CURRENT_SEASON)
         .select_related("user")
         .prefetch_related(

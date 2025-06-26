@@ -1,5 +1,6 @@
 from predictions.models import Driver, Prediction, RacingTeam, Result, Session, GrandPrix, PredictedPosition, ResultPole, PredictedPole, RaceLineUp
-from ranking.models import YearScore
+from ranking.models import SeasonScore
+from accounts.models import CustomUser
 
 from datetime import datetime, date, timedelta
 
@@ -14,7 +15,8 @@ reset_gp_lu = True if str(input("Delete and reset lineups? [Y/n]")).lower() == "
 
 if reset_sessions_to_fwc:
     #change state and reset predictions scores
-    YearScore.objects.filter(season=CURRENT_SEASON).update(points=0)
+    SeasonScore.objects.filter(season=CURRENT_SEASON).update(points=0)
+    CustomUser.objects.all().update(amount_preds=0, amount_preds_correct=0)
 
     for gp in grand_prixs:
         sessions = Session.objects.filter(grand_prix=gp)
@@ -30,7 +32,7 @@ if reset_all:
     grand_prixs.update(ended=False)
     Driver.objects.filter(season=CURRENT_SEASON).update(points=0)
     RacingTeam.objects.filter(season=CURRENT_SEASON).update(points=0)
-    YearScore.objects.filter(season=CURRENT_SEASON).update(points=0)
+    SeasonScore.objects.filter(season=CURRENT_SEASON).update(points=0)
 
     for gp in grand_prixs:
         sessions = Session.objects.filter(grand_prix=gp)
@@ -44,5 +46,5 @@ if reset_all:
         PredictedPole.objects.filter(prediction__in=predictions).update(correct=False)
 
 if reset_gp_lu:
-    RaceLineUp.objects.filter(session__grand_prix__in=grand_prixs).delete()
+    RaceLineUp.objects.filter(session__grand_prix__season__season=CURRENT_SEASON).delete()
     grand_prixs.update(lineup_associated=False)

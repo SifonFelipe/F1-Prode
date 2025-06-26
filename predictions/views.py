@@ -4,6 +4,7 @@ import json
 from . import api
 from F1Prode.static_variables import FNAME_TO_CLASS
 
+
 def createPred(request, season, location, session_type):
     session = api.fetch_full_session_data(
         season=season,
@@ -96,6 +97,7 @@ def championPred(request, season):
         "season": season
     }
     return render(request, 'champions.html', context)
+
 
 def saveChampionPred(request, season):
     if request.method != "POST":

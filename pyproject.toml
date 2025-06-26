@@ -10,4 +10,5 @@ dependencies = [
     "django-extensions>=4.1",
     "djangorestframework>=3.16.0",
     "fastf1>=3.5.3",
+    "flake8>=7.2.0",
 ]

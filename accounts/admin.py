@@ -3,15 +3,16 @@ from django.contrib import admin
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser, FriendRequest
-from ranking.models import YearScore
+from ranking.models import SeasonScore
 
 from datetime import datetime
 
 from F1Prode.static_variables import CURRENT_SEASON
 
+"""
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    list_display = ['username', 'email', 'is_staff']
+    list_display = ['username', 'email', 'is_staff', 'best_prediction', 'amount_preds', 'amount_preds_correct']
     #fieldsets = UserAdmin.fieldsets + (('Custom Fields', {'fields': ('points',)}),)
 
     def get_points(self, obj):
@@ -22,3 +23,5 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register([YearScore, FriendRequest])
+"""
+admin.site.register([CustomUser, SeasonScore, FriendRequest])

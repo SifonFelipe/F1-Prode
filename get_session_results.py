@@ -135,7 +135,7 @@ for season in ALL_SEASONS:
     drivers = season_settings.drivers.all()
 
     for gp in gps:
-        print(f"\nGetting and Comparing data from {gp.name}")
+        print(f"\nGetting and processing data from {gp.name}")
 
         if gp.event_format == "sprint_qualifying":
             print("Has Sprint Race!")

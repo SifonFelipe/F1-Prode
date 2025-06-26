@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from datetime import datetime
+
+
 class SeasonSettings(models.Model):
     season = models.IntegerField()
     amount_drivers = models.IntegerField()
@@ -38,7 +40,7 @@ class Driver(models.Model):
     number = models.IntegerField()
     racing_team = models.ForeignKey(RacingTeam, on_delete=models.DO_NOTHING, related_name='drivers')
     country = models.CharField(max_length=70, null=True, blank=True)
-    headshot = models.URLField(max_length=500)
+    headshot = models.URLField(max_length=500, blank=True, null=True)
     points = models.DecimalField(default=0, decimal_places=2, max_digits=8)
     is_active = models.BooleanField(default=True)
 
@@ -105,6 +107,7 @@ class Session(models.Model):
     session_type = models.CharField(max_length=50, choices=SESSION_TYPES)
     session_date = models.DateTimeField()
     state = models.CharField(max_length=50, choices=STATES, default="NF")
+    #  Change to STATUS!!!! state????
 
     class Meta:
         ordering = ['session_date']
@@ -127,8 +130,9 @@ class RaceLineUp(models.Model):
         return f"{self.session} - {self.driver} - {self.team}"
 
 class ChampionPrediction(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    season = models.ForeignKey(SeasonSettings, on_delete=models.DO_NOTHING, related_name="champion_preds")
+    from ranking.models import SeasonScore
+
+    season_score = models.ForeignKey(SeasonScore, on_delete=models.CASCADE, related_name='champion_preds', null=True, blank=True)
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
     team = models.ForeignKey(RacingTeam, on_delete=models.CASCADE)
 
@@ -141,21 +145,23 @@ class Prediction(models.Model):
     Prediction model.
     It works as a manager for the predictions of a user for a session.
     """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    from ranking.models import SeasonScore
+
     session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name="predictions")
     points_scored = models.DecimalField(default=0, decimal_places=2, max_digits=6)
+    season_score = models.ForeignKey(SeasonScore, on_delete=models.CASCADE, related_name='predictions', null=True, blank=True)
 
     @property
     def pole(self):
         return self.predicted_pole.first()
     class Meta:
-        ordering = ["-points_scored", "user"]
+        ordering = ["-points_scored", "season_score"]
         constraints = [
-            models.UniqueConstraint(fields=['user', 'session'], name='unique_prediction_per_user_per_session')
+            models.UniqueConstraint(fields=['season_score', 'session'], name='unique_prediction_per_season_score_per_session')
         ]
 
     def __str__(self):
-        return f"[{self.session.grand_prix.season} - {self.session.grand_prix.name}] Prediction by {self.user.username} for {self.session.session_type}" 
+        return f"[{self.session.grand_prix.season} - {self.session.grand_prix.name}] Prediction by {self.season_score.user} for {self.session.session_type}" 
 
 
 class PredictedPosition(models.Model):

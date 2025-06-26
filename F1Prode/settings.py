@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'predictions',
     'home',
     'ranking',
+    'social',
 ]
 
 MIDDLEWARE = [

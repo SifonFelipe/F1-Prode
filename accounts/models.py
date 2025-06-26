@@ -2,20 +2,22 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from datetime import datetime
-from django.db.models import Sum
+from django.db.models import Sum, Q
+from predictions.models import Prediction
 
 class CustomUser(AbstractUser):
-    @property   #property hace que sea un atributo de la clase. No hace falta llamar a CustomUser.friends(), solo a CustomUser.friends
+    best_prediction = models.ForeignKey(Prediction, on_delete=models.CASCADE, blank=True, null=True)
+    amount_preds = models.IntegerField(default=0)
+    amount_preds_correct = models.IntegerField(default=0)
+
+    @property
     def friends(self):
-        sent = CustomUser.objects.filter(
-            received_requests__from_user=self,
-            received_requests__is_accepted=True
+        friends = CustomUser.objects.filter(
+            Q(received_requests__from_user=self, received_requests__is_accepted=True) |
+            Q(sent_requests__to_user=self, sent_requests__is_accepted=True)
         )
-        received = CustomUser.objects.filter(
-            sent_requests__to_user=self,
-            sent_requests__is_accepted=True
-        )
-        return sent.union(received)
+        return friends
+
 
 class FriendRequest(models.Model):
     from_user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='sent_requests', on_delete=models.CASCADE)
