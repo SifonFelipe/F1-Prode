@@ -24,5 +24,6 @@ urlpatterns = [
     path('predictions/', include('predictions.urls')),
     path('home/', include('home.urls')),
     path('rankings/', include('ranking.urls')),
+    path('social/', include('social.urls')),
 
 ]
